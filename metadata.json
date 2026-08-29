@@ -1,0 +1,6 @@
+{
+  "name": "দোকান ও QR হিসাব",
+  "description": "আধুনিক ও প্রিমিয়াম বাংলা দোকান/ব্যবসা ব্যবস্থাপনা, QR কোড স্ক্যান, বিক্রির হিসাব, স্বয়ংক্রিয় স্টক ও কাস্টমার বাকি রিমাইন্ডার অ্যাপ",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
