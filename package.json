@@ -1,0 +1,10 @@
+{
+  "name": "dokan-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "দোকান ও QR হিসাব - রিটেল শপ ম্যানেজার",
+  "scripts": {
+    "build": "echo 'Static web assets ready in public/'",
+    "deploy": "wrangler deploy"
+  }
+}
