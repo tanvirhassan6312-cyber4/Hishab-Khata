@@ -10,9 +10,10 @@ import androidx.room.RoomDatabase
         ProductEntity::class,
         SaleTransactionEntity::class,
         ShopProfileEntity::class,
-        MemoEntity::class
+        MemoEntity::class,
+        CommunityCreditRecordEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -20,6 +21,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun saleDao(): SaleDao
     abstract fun shopProfileDao(): ShopProfileDao
     abstract fun memoDao(): MemoDao
+    abstract fun communityCreditDao(): CommunityCreditDao
 
     companion object {
         @Volatile

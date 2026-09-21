@@ -168,7 +168,7 @@ fun ProductsScreen(
         if (!product.qrCode.isNullOrBlank()) {
             QrPreviewDialog(
                 product = product,
-                shopName = shopProfile?.shopName ?: "আমার ব্যবসা",
+                shopProfile = shopProfile,
                 onDismiss = { viewingQrProduct = null },
                 onSellNow = {
                     viewingQrProduct = null

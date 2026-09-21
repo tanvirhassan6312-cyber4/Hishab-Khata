@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,12 +28,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.SaleTransactionEntity
+import com.example.ui.components.AtomicProximityDialog
+import com.example.ui.components.CustomerCreditLookupDialog
 import com.example.ui.components.DokanTopBar
 import com.example.ui.components.DueStatusBadge
+import com.example.ui.components.SmartRestockSpeakerDialog
 import com.example.ui.components.StatCard
+import com.example.ui.components.VoiceLedgerDialog
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.ShopViewModel
 import com.example.util.BengaliFormatters
+import com.example.util.SmartReStockSpeakerHelper
 
 @Composable
 fun HomeScreen(
@@ -45,8 +51,10 @@ fun HomeScreen(
     onNavigateToQrHistory: () -> Unit,
     onNavigateToProductHistory: () -> Unit,
     onShowDueReminders: () -> Unit,
-    onShowSettings: () -> Unit
+    onShowSettings: () -> Unit,
+    onShowFaq: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val shopProfile by viewModel.shopProfile.collectAsStateWithLifecycle()
     val todaySales by viewModel.todaySalesTotal.collectAsStateWithLifecycle()
     val todayDue by viewModel.todayDueTotal.collectAsStateWithLifecycle()
@@ -54,6 +62,13 @@ fun HomeScreen(
     val totalStock by viewModel.totalStock.collectAsStateWithLifecycle()
     val dueReminders by viewModel.pendingDueReminders.collectAsStateWithLifecycle()
     val allTransactions by viewModel.allTransactions.collectAsStateWithLifecycle()
+    val allProducts by viewModel.allProducts.collectAsStateWithLifecycle()
+    val lowStockProducts by viewModel.lowStockProducts.collectAsStateWithLifecycle()
+
+    var showVoiceLedgerDialog by remember { mutableStateOf(false) }
+    var showCreditLookupDialog by remember { mutableStateOf(false) }
+    var showRestockDialog by remember { mutableStateOf(false) }
+    var showAtomicProximityDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -62,8 +77,29 @@ fun HomeScreen(
                 subtitle = shopProfile?.ownerName?.takeIf { it.isNotBlank() },
                 dueAlertCount = dueReminders.size,
                 onNotificationClick = onShowDueReminders,
-                onProfileClick = onShowSettings
+                onProfileClick = onShowSettings,
+                onFaqClick = onShowFaq
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showVoiceLedgerDialog = true },
+                containerColor = DeepIndigo,
+                contentColor = Color.White,
+                shape = CircleShape,
+                modifier = Modifier
+                    .padding(bottom = 60.dp)
+                    .testTag("fab_voice_ledger")
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Mic, contentDescription = "ভয়েস হিসাব")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("AI মুখে বলা হিসাব", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                }
+            }
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
@@ -73,7 +109,7 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(top = 16.dp, bottom = 90.dp)
+            contentPadding = PaddingValues(top = 16.dp, bottom = 120.dp)
         ) {
             // 1. Due Alert Banner (if any customer has payment due today)
             if (dueReminders.isNotEmpty()) {
@@ -82,6 +118,84 @@ fun HomeScreen(
                         count = dueReminders.size,
                         onClick = onShowDueReminders
                     )
+                }
+            }
+
+            // 1.1 Low Stock Smart Speaker Alert Banner (if low stock products exist)
+            if (lowStockProducts.isNotEmpty()) {
+                item {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Amber50),
+                        border = BorderStroke(1.dp, Amber300),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showRestockDialog = true }
+                            .testTag("banner_smart_restock")
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(42.dp)
+                                        .background(Amber100, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.VolumeUp,
+                                        contentDescription = "স্পিকার",
+                                        tint = Amber800,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = "📢 স্মার্ট রি-স্টক স্পিকার",
+                                        style = MaterialTheme.typography.titleSmall.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = Amber900
+                                        )
+                                    )
+                                    Text(
+                                        text = "${BengaliFormatters.toBanglaNumber(lowStockProducts.size)}টি পণ্যের স্টক কম! ভয়েস শুনুন ও পাইকারি অর্ডার দিন",
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = CharcoalDark,
+                                            fontSize = 11.sp
+                                        )
+                                    )
+                                }
+                            }
+
+                            // Instant Voice Speaker Button
+                            IconButton(
+                                onClick = {
+                                    lowStockProducts.firstOrNull()?.let { prod ->
+                                        SmartReStockSpeakerHelper.speakRestockAlert(context, prod, shopProfile)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(Amber200, CircleShape)
+                            ) {
+                                Icon(
+                                    Icons.Default.PlayArrow,
+                                    contentDescription = "শুনুন",
+                                    tint = Amber900,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
@@ -156,7 +270,7 @@ fun HomeScreen(
 
                                 Column {
                                     Text(
-                                        text = "QR কোড স্ক্যান করুন",
+                                        text = "QR কোড স্ক্যান ও প্রিন্ট",
                                         style = MaterialTheme.typography.titleMedium.copy(
                                             fontWeight = FontWeight.Bold,
                                             color = Color.White,
@@ -165,7 +279,7 @@ fun HomeScreen(
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
-                                        text = "ক্যামেরা দিয়ে স্ক্যান করে পণ্যের বিবরণ দেখুন ও বিক্রি করুন",
+                                        text = "স্ক্যান করে বিক্রি, স্টিকার ও A4 শিট প্রিন্ট করুন",
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             color = Color.White.copy(alpha = 0.75f),
                                             fontSize = 11.sp
@@ -252,7 +366,119 @@ fun HomeScreen(
                 }
             }
 
-            // 4. Quick Action Grid (2x2 Clean Action Buttons)
+            // 4. AI New Features Spotlight Row (Voice Ledger, AI Trust Score & Atomic Proximity Pay)
+            item {
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF1E1B4B)
+                    ),
+                    border = BorderStroke(1.dp, Color(0xFF4338CA)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showAtomicProximityDialog = true }
+                        .testTag("banner_atomic_proximity_pay")
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .clip(CircleShape)
+                                    .background(Brush.linearGradient(listOf(Emerald500, Emerald700))),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Sensors,
+                                    contentDescription = "অ্যাটোমিক প্রক্সিমিটি",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "⚡ অ্যাটোমিক প্রক্সিমিটি পে",
+                                        style = MaterialTheme.typography.titleSmall.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            fontSize = 15.sp
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = Emerald500
+                                    ) {
+                                        Text(
+                                            text = "অফলাইন",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = "কোনো কিউআর বা ইন্টারনেট ছাড়া কাস্টমারের সাথে টাচলেস অডিও হ্যান্ডশেকে বাকি পরিশোধ",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = Color.White.copy(alpha = 0.8f),
+                                        fontSize = 11.sp,
+                                        lineHeight = 15.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    MinimalActionCard(
+                        title = "🎙️ AI মুখে বলা হিসাব",
+                        icon = Icons.Default.Mic,
+                        iconBgColor = RoyalBlue50,
+                        iconTintColor = RoyalBlue700,
+                        onClick = { showVoiceLedgerDialog = true },
+                        modifier = Modifier.weight(1f),
+                        testTag = "home_opt_voice_ledger"
+                    )
+
+                    MinimalActionCard(
+                        title = "🛡️ কাস্টমার ক্রেডিট স্কোর",
+                        icon = Icons.Default.Shield,
+                        iconBgColor = Emerald50,
+                        iconTintColor = Emerald700,
+                        onClick = { showCreditLookupDialog = true },
+                        modifier = Modifier.weight(1f),
+                        testTag = "home_opt_credit_trust"
+                    )
+                }
+            }
+
+            // 5. Quick Action Grid (2x2 Clean Action Buttons)
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(
@@ -307,7 +533,75 @@ fun HomeScreen(
                 }
             }
 
-            // 5. Recent Transactions Header & List
+            // 5.1 AI FAQ & Developer Attribution Helper Card
+            item {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = RoyalBlue50),
+                    border = BorderStroke(1.dp, RoyalBlue200),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onShowFaq() }
+                        .testTag("home_faq_banner")
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(DeepIndigo),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.HelpOutline,
+                                    contentDescription = "FAQ",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "প্রশ্ন ও AI সহায়তা (FAQ)",
+                                        style = MaterialTheme.typography.titleSmall.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = DeepIndigo,
+                                            fontSize = 14.sp
+                                        )
+                                    )
+                                }
+                                Text(
+                                    text = "অ্যাপ না বুঝলে প্রশ্ন করুন • ডেভলপার: তাফসির এবং তানভির",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = CharcoalDark.copy(alpha = 0.8f),
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+                        }
+
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = DeepIndigo.copy(alpha = 0.7f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            // 6. Recent Transactions Header & List
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -363,6 +657,48 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    // Voice Ledger Dialog
+    if (showVoiceLedgerDialog) {
+        VoiceLedgerDialog(
+            allProducts = allProducts,
+            onDismiss = { showVoiceLedgerDialog = false },
+            onConfirmEntry = { parsed ->
+                viewModel.processVoiceTransaction(parsed) {
+                    showVoiceLedgerDialog = false
+                }
+            }
+        )
+    }
+
+    // Customer Credit Trust Lookup Dialog
+    if (showCreditLookupDialog) {
+        CustomerCreditLookupDialog(
+            viewModel = viewModel,
+            onDismiss = { showCreditLookupDialog = false }
+        )
+    }
+
+    // Smart Restock Speaker Dialog
+    if (showRestockDialog) {
+        SmartRestockSpeakerDialog(
+            lowStockProducts = lowStockProducts,
+            shopProfile = shopProfile,
+            onDismiss = { showRestockDialog = false }
+        )
+    }
+
+    // Atomic Proximity Pay & Contactless Due Settlement Dialog
+    if (showAtomicProximityDialog) {
+        AtomicProximityDialog(
+            shopProfile = shopProfile,
+            allTransactions = allTransactions,
+            onDismiss = { showAtomicProximityDialog = false },
+            onDueSettled = { tx ->
+                viewModel.markDueAsPaid(tx)
+            }
+        )
     }
 }
 

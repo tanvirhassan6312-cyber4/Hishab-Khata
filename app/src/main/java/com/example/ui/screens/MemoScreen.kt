@@ -42,11 +42,16 @@ import com.example.data.local.MemoEntity
 import com.example.data.local.MemoItem
 import com.example.data.local.ProductEntity
 import com.example.ui.components.BengaliEmptyState
+import com.example.ui.components.CustomerCreditLookupDialog
 import com.example.ui.components.DokanTopBar
+import com.example.ui.components.TrustScoreDialog
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.ShopViewModel
 import com.example.util.BengaliFormatters
+import com.example.util.MemoPrintHelper
 import com.example.util.MemoUtils
+import com.example.util.TrustScoreResult
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -144,6 +149,10 @@ fun MemoScreen(
         MemoPreviewDialog(
             memo = memo,
             onDismiss = { selectedMemoForPreview = null },
+            onPrint = {
+                val items = MemoUtils.deserializeItems(memo.itemsJson)
+                MemoPrintHelper.printMemo(context, memo, items)
+            },
             onShareWhatsApp = {
                 val items = MemoUtils.deserializeItems(memo.itemsJson)
                 MemoUtils.shareViaWhatsApp(context, memo, items)
@@ -233,6 +242,10 @@ fun MemoCreateView(
     var customerName by remember { mutableStateOf("") }
     var customerPhone by remember { mutableStateOf("") }
     var customerAddress by remember { mutableStateOf("") }
+
+    val scope = rememberCoroutineScope()
+    var selectedTrustScoreResult by remember { mutableStateOf<TrustScoreResult?>(null) }
+    var showCreditLookupDialog by remember { mutableStateOf(false) }
 
     // Dynamic Items in Memo
     val itemsList = remember {
@@ -471,6 +484,24 @@ fun MemoCreateView(
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f)
                     )
+                }
+
+                if (customerPhone.isNotBlank() || customerName.isNotBlank()) {
+                    OutlinedButton(
+                        onClick = {
+                            scope.launch {
+                                val res = viewModel.getCustomerTrustScore(customerName, customerPhone.ifBlank { null })
+                                selectedTrustScoreResult = res
+                            }
+                        },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Emerald700),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth().height(38.dp)
+                    ) {
+                        Icon(Icons.Default.Shield, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("🛡️ কাস্টমার CIB ক্রেডিট ট্রাস্ট স্কোর ও রিস্ক যাচাই", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -842,65 +873,142 @@ fun MemoCreateView(
         }
 
         // Save & Print Action Buttons
-        Button(
-            onClick = {
-                if (customerName.isBlank()) {
-                    errorMessage = "ক্রেতা বা প্রাপকের নাম লিখুন"
-                    return@Button
-                }
-                val validItems = itemsList.filter { it.itemName.isNotBlank() && it.quantity > 0 }
-                if (validItems.isEmpty()) {
-                    errorMessage = "মেমোতে অন্তত একটি পণ্যের নাম ও পরিমাণ লিখুন"
-                    return@Button
-                }
-
-                val memo = MemoEntity(
-                    memoNumber = memoNumber,
-                    memoType = selectedMemoType,
-                    date = memoDateMillis,
-                    shopName = currentShopName.ifBlank { "আমার ব্যবসা" },
-                    preparedBy = currentPreparedBy,
-                    shopPhone = currentShopPhone,
-                    shopAddress = currentShopAddress,
-                    customerName = customerName.trim(),
-                    customerPhone = customerPhone.trim().takeIf { it.isNotBlank() },
-                    customerAddress = customerAddress.trim().takeIf { it.isNotBlank() },
-                    itemsJson = MemoUtils.serializeItems(validItems),
-                    subtotal = subtotal,
-                    discountAmount = discount,
-                    vatPercent = vatPercent,
-                    vatAmount = vatAmount,
-                    grandTotal = grandTotal,
-                    paidAmount = paidAmount,
-                    dueAmount = dueAmount,
-                    paymentMethod = paymentMethod,
-                    notes = memoNotes,
-                    terms = "বিক্রিত মাল ফেরত নেওয়া হয় না।",
-                    createdAt = System.currentTimeMillis()
-                )
-
-                viewModel.saveMemo(
-                    memo = memo,
-                    items = validItems,
-                    deductFromInventory = true,
-                    onSuccess = { saved ->
-                        onMemoSaved(saved)
-                    }
-                )
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Emerald600),
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp)
-                .testTag("btn_save_memo")
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Icon(Icons.Default.ReceiptLong, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("মেমো তৈরি ও সংরক্ষণ করুন", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Button(
+                onClick = {
+                    if (customerName.isBlank()) {
+                        errorMessage = "ক্রেতা বা প্রাপকের নাম লিখুন"
+                        return@Button
+                    }
+                    val validItems = itemsList.filter { it.itemName.isNotBlank() && it.quantity > 0 }
+                    if (validItems.isEmpty()) {
+                        errorMessage = "মেমোতে অন্তত একটি পণ্যের নাম ও পরিমাণ লিখুন"
+                        return@Button
+                    }
+
+                    val memo = MemoEntity(
+                        memoNumber = memoNumber,
+                        memoType = selectedMemoType,
+                        date = memoDateMillis,
+                        shopName = currentShopName.ifBlank { "আমার ব্যবসা" },
+                        preparedBy = currentPreparedBy,
+                        shopPhone = currentShopPhone,
+                        shopAddress = currentShopAddress,
+                        customerName = customerName.trim(),
+                        customerPhone = customerPhone.trim().takeIf { it.isNotBlank() },
+                        customerAddress = customerAddress.trim().takeIf { it.isNotBlank() },
+                        itemsJson = MemoUtils.serializeItems(validItems),
+                        subtotal = subtotal,
+                        discountAmount = discount,
+                        vatPercent = vatPercent,
+                        vatAmount = vatAmount,
+                        grandTotal = grandTotal,
+                        paidAmount = paidAmount,
+                        dueAmount = dueAmount,
+                        paymentMethod = paymentMethod,
+                        notes = memoNotes,
+                        terms = "বিক্রিত মাল ফেরত নেওয়া হয় না।",
+                        createdAt = System.currentTimeMillis()
+                    )
+
+                    viewModel.saveMemo(
+                        memo = memo,
+                        items = validItems,
+                        deductFromInventory = true,
+                        onSuccess = { saved ->
+                            onMemoSaved(saved)
+                        }
+                    )
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Emerald600),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .testTag("btn_save_memo")
+            ) {
+                Icon(Icons.Default.ReceiptLong, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("মেমো তৈরি ও সংরক্ষণ করুন", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            }
+
+            Button(
+                onClick = {
+                    if (customerName.isBlank()) {
+                        errorMessage = "ক্রেতা বা প্রাপকের নাম লিখুন"
+                        return@Button
+                    }
+                    val validItems = itemsList.filter { it.itemName.isNotBlank() && it.quantity > 0 }
+                    if (validItems.isEmpty()) {
+                        errorMessage = "মেমোতে অন্তত একটি পণ্যের নাম ও পরিমাণ লিখুন"
+                        return@Button
+                    }
+
+                    val memo = MemoEntity(
+                        memoNumber = memoNumber,
+                        memoType = selectedMemoType,
+                        date = memoDateMillis,
+                        shopName = currentShopName.ifBlank { "আমার ব্যবসা" },
+                        preparedBy = currentPreparedBy,
+                        shopPhone = currentShopPhone,
+                        shopAddress = currentShopAddress,
+                        customerName = customerName.trim(),
+                        customerPhone = customerPhone.trim().takeIf { it.isNotBlank() },
+                        customerAddress = customerAddress.trim().takeIf { it.isNotBlank() },
+                        itemsJson = MemoUtils.serializeItems(validItems),
+                        subtotal = subtotal,
+                        discountAmount = discount,
+                        vatPercent = vatPercent,
+                        vatAmount = vatAmount,
+                        grandTotal = grandTotal,
+                        paidAmount = paidAmount,
+                        dueAmount = dueAmount,
+                        paymentMethod = paymentMethod,
+                        notes = memoNotes,
+                        terms = "বিক্রিত মাল ফেরত নেওয়া হয় না।",
+                        createdAt = System.currentTimeMillis()
+                    )
+
+                    viewModel.saveMemo(
+                        memo = memo,
+                        items = validItems,
+                        deductFromInventory = true,
+                        onSuccess = { saved ->
+                            onMemoSaved(saved)
+                            MemoPrintHelper.printMemo(context, saved, validItems)
+                        }
+                    )
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue700),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .testTag("btn_save_and_print_memo")
+            ) {
+                Icon(Icons.Default.Print, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("🖨️ মেমো তৈরি ও সরাসরি প্রিন্ট করুন", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+            }
         }
 
         Spacer(modifier = Modifier.height(60.dp))
+    }
+
+    // Specific Customer Trust Score Dialog
+    selectedTrustScoreResult?.let { res ->
+        TrustScoreDialog(
+            customerName = customerName.ifBlank { "গ্রাহক" },
+            customerPhone = customerPhone,
+            trustScoreResult = res,
+            onDismiss = { selectedTrustScoreResult = null },
+            onReportDefaulter = { phone, name, amt, note ->
+                viewModel.reportDefaulter(phone, name, amt, note)
+            }
+        )
     }
 }
 
@@ -968,6 +1076,7 @@ fun MemoHistoryCard(
     onView: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val context = LocalContext.current
     val items = remember(memo.itemsJson) { MemoUtils.deserializeItems(memo.itemsJson) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
@@ -1065,7 +1174,17 @@ fun MemoHistoryCard(
                     fontWeight = FontWeight.Medium
                 )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = {
+                            val items = MemoUtils.deserializeItems(memo.itemsJson)
+                            MemoPrintHelper.printMemo(context, memo, items)
+                        },
+                        modifier = Modifier.size(32.dp).testTag("btn_print_memo_history")
+                    ) {
+                        Icon(Icons.Default.Print, contentDescription = "প্রিন্ট করুন", tint = RoyalBlue700, modifier = Modifier.size(20.dp))
+                    }
+
                     IconButton(onClick = { showDeleteConfirm = true }, modifier = Modifier.size(30.dp)) {
                         Icon(Icons.Default.DeleteOutline, contentDescription = "মুছুন", tint = Red600, modifier = Modifier.size(18.dp))
                     }
@@ -1117,6 +1236,7 @@ fun MemoHistoryCard(
 fun MemoPreviewDialog(
     memo: MemoEntity,
     onDismiss: () -> Unit,
+    onPrint: () -> Unit,
     onShareWhatsApp: () -> Unit,
     onShareText: () -> Unit
 ) {
@@ -1350,7 +1470,24 @@ fun MemoPreviewDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Direct Print Button (Native Android Print / Save PDF)
+                Button(
+                    onClick = onPrint,
+                    colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue700),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .testTag("btn_print_memo_dialog")
+                ) {
+                    Icon(Icons.Default.Print, contentDescription = null, tint = Color.White)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("🖨️ মেমো প্রিন্ট করুন (Print / Save PDF)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // WhatsApp & Share Action Buttons (বিনা মূল্যে WhatsApp শেয়ার)
                 Row(

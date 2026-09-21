@@ -26,11 +26,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.SaleTransactionEntity
+import com.example.ui.components.AtomicProximityDialog
 import com.example.ui.components.BengaliEmptyState
 import com.example.ui.components.DokanTopBar
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.ShopViewModel
+import com.example.util.AtomicProximityEngine
 import com.example.util.BengaliFormatters
+import com.example.util.NearbyCustomer
 import com.example.util.ReminderUtils
 
 @Composable
@@ -45,6 +48,8 @@ fun DueRemindersScreen(
     val context = LocalContext.current
 
     var selectedSubTab by remember { mutableIntStateOf(0) } // 0: আজ ও মেয়াদোত্তীর্ণ, 1: সব বাকি
+    var showProximityDialog by remember { mutableStateOf(false) }
+    var selectedProximityCustomer by remember { mutableStateOf<NearbyCustomer?>(null) }
 
     val displayList = if (selectedSubTab == 0) pendingDueReminders else allDueTransactions.filter { !it.isPaid }
 
@@ -169,7 +174,75 @@ fun DueRemindersScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Atomic Proximity Pay Quick Action Banner
+            Surface(
+                color = Color(0xFF1E1B4B),
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, Color(0xFF4338CA)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        selectedProximityCustomer = null
+                        showProximityDialog = true
+                    }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Emerald500),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Sensors,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "⚡ অ্যাটোমিক প্রক্সিমিটি পে (কন্টাক্টলেস)",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    fontSize = 13.sp
+                                )
+                            )
+                            Text(
+                                text = "দোকানের কাছাকাছি থাকা কাস্টমারের সাথে অফলাইন হ্যান্ডশেক",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Color.White.copy(alpha = 0.75f),
+                                    fontSize = 11.sp
+                                )
+                            )
+                        }
+                    }
+
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             if (displayList.isEmpty()) {
                 BengaliEmptyState(
@@ -187,12 +260,39 @@ fun DueRemindersScreen(
                             tx = tx,
                             shopName = shopProfile?.shopName ?: "আমার ব্যবসা",
                             shopkeeperName = shopProfile?.ownerName ?: "তানভির আহমেদ",
-                            onPayDue = { viewModel.markDueAsPaid(tx) }
+                            onPayDue = { viewModel.markDueAsPaid(tx) },
+                            onAcousticPay = {
+                                selectedProximityCustomer = NearbyCustomer(
+                                    name = tx.customerName ?: "গ্রাহক",
+                                    phone = tx.customerPhone ?: "০১৭XXXXXXXX",
+                                    totalDue = tx.dueAmount,
+                                    distanceMeters = 0.8,
+                                    rssiDb = -42,
+                                    signalQuality = "শক্তিশালী",
+                                    relatedTransactions = listOf(tx)
+                                )
+                                showProximityDialog = true
+                            }
                         )
                     }
                 }
             }
         }
+    }
+
+    if (showProximityDialog) {
+        AtomicProximityDialog(
+            initialCustomer = selectedProximityCustomer,
+            shopProfile = shopProfile,
+            allTransactions = allDueTransactions,
+            onDismiss = {
+                showProximityDialog = false
+                selectedProximityCustomer = null
+            },
+            onDueSettled = { tx ->
+                viewModel.markDueAsPaid(tx)
+            }
+        )
     }
 }
 
@@ -201,7 +301,8 @@ fun DueReminderItemCard(
     tx: SaleTransactionEntity,
     shopName: String,
     shopkeeperName: String,
-    onPayDue: () -> Unit
+    onPayDue: () -> Unit,
+    onAcousticPay: () -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -392,17 +493,37 @@ fun DueReminderItemCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // "পরিশোধ হয়েছে (Paid চিহ্নিত করুন)" Button
-            OutlinedButton(
-                onClick = onPayDue,
-                shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Emerald700),
-                border = BorderStroke(1.dp, Emerald500),
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Default.CheckCircleOutline, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("পরিশোধ হয়েছে (Paid চিহ্নিত করুন)", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                // "⚡ টাচলেস পে" Button
+                FilledTonalButton(
+                    onClick = onAcousticPay,
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = Emerald50,
+                        contentColor = Emerald700
+                    ),
+                    modifier = Modifier.weight(1.1f)
+                ) {
+                    Icon(Icons.Default.Sensors, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("⚡ টাচলেস পে", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
+
+                // "পরিশোধ হয়েছে" Button
+                OutlinedButton(
+                    onClick = onPayDue,
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = CharcoalDark),
+                    border = BorderStroke(1.dp, CardBorder),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.CheckCircleOutline, contentDescription = null, modifier = Modifier.size(15.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("পরিশোধ চিহ্নিত", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                }
             }
         }
     }

@@ -29,14 +29,18 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.SaleTransactionEntity
 import com.example.ui.components.BengaliEmptyState
+import com.example.ui.components.CustomerCreditLookupDialog
 import com.example.ui.components.DokanTopBar
 import com.example.ui.components.DueStatusBadge
 import com.example.ui.components.StatCard
+import com.example.ui.components.TrustScoreDialog
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.DailySummary
 import com.example.ui.viewmodel.ShopViewModel
 import com.example.util.BengaliFormatters
 import com.example.util.ReminderUtils
+import com.example.util.TrustScoreResult
+import kotlinx.coroutines.launch
 import java.util.Calendar
 
 @Composable
@@ -48,6 +52,7 @@ fun DailyLedgerScreen(
     val dueReminders by viewModel.pendingDueReminders.collectAsStateWithLifecycle()
     val shopProfile by viewModel.shopProfile.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val calendar = remember { Calendar.getInstance() }
     val datePickerDialog = remember {
@@ -66,6 +71,10 @@ fun DailyLedgerScreen(
     }
 
     var selectedTransactionForDetails by remember { mutableStateOf<SaleTransactionEntity?>(null) }
+    var showCreditLookupDialog by remember { mutableStateOf(false) }
+    var selectedTrustScoreResult by remember { mutableStateOf<TrustScoreResult?>(null) }
+    var selectedTrustCustomerName by remember { mutableStateOf("") }
+    var selectedTrustCustomerPhone by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -74,6 +83,26 @@ fun DailyLedgerScreen(
                 subtitle = "দৈনিক কেনাবেচা ও হিসাব খাতা",
                 dueAlertCount = dueReminders.size
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { showCreditLookupDialog = true },
+                containerColor = Emerald700,
+                contentColor = Color.White,
+                shape = CircleShape,
+                modifier = Modifier
+                    .padding(bottom = 60.dp)
+                    .testTag("fab_cib_lookup")
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Shield, contentDescription = "CIB স্কোর")
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("CIB ট্রাস্ট স্কোর", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
+            }
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
@@ -262,9 +291,40 @@ fun DailyLedgerScreen(
             tx = tx,
             shopName = shopProfile?.shopName ?: "আমার ব্যবসা",
             onDismiss = { selectedTransactionForDetails = null },
+            onCheckTrustScore = {
+                scope.launch {
+                    val name = tx.customerName ?: tx.customerPhone ?: "গ্রাহক"
+                    val phone = tx.customerPhone
+                    val res = viewModel.getCustomerTrustScore(name, phone)
+                    selectedTrustCustomerName = name
+                    selectedTrustCustomerPhone = phone ?: ""
+                    selectedTrustScoreResult = res
+                }
+            },
             onPayDue = {
                 viewModel.markDueAsPaid(tx)
                 selectedTransactionForDetails = null
+            }
+        )
+    }
+
+    // CIB Trust Lookup Dialog
+    if (showCreditLookupDialog) {
+        CustomerCreditLookupDialog(
+            viewModel = viewModel,
+            onDismiss = { showCreditLookupDialog = false }
+        )
+    }
+
+    // Specific Customer Trust Score Dialog
+    selectedTrustScoreResult?.let { res ->
+        TrustScoreDialog(
+            customerName = selectedTrustCustomerName,
+            customerPhone = selectedTrustCustomerPhone,
+            trustScoreResult = res,
+            onDismiss = { selectedTrustScoreResult = null },
+            onReportDefaulter = { phone, name, amt, note ->
+                viewModel.reportDefaulter(phone, name, amt, note)
             }
         )
     }
@@ -430,6 +490,7 @@ fun TransactionDetailDialog(
     tx: SaleTransactionEntity,
     shopName: String,
     onDismiss: () -> Unit,
+    onCheckTrustScore: () -> Unit = {},
     onPayDue: () -> Unit
 ) {
     val context = LocalContext.current
@@ -468,6 +529,20 @@ fun TransactionDetailDialog(
                     }
                     if (!tx.customerPhone.isNullOrBlank()) {
                         DetailRow("মোবাইল নম্বর:", tx.customerPhone)
+                    }
+                }
+
+                if (!tx.customerPhone.isNullOrBlank() || !tx.customerName.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedButton(
+                        onClick = onCheckTrustScore,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Emerald700),
+                        modifier = Modifier.fillMaxWidth().height(38.dp)
+                    ) {
+                        Icon(Icons.Default.Shield, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("🛡️ কাস্টমার CIB ক্রেডিট ট্রাস্ট স্কোর দেখুন", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 

@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.local.ProductEntity
+import com.example.data.local.ShopProfileEntity
 import com.example.data.local.SaleTransactionEntity
 import com.example.ui.components.BengaliEmptyState
 import com.example.ui.components.CameraQrScanner
@@ -46,6 +47,7 @@ import com.example.ui.components.QrPreviewImage
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.ShopViewModel
 import com.example.util.BengaliFormatters
+import com.example.util.QrPrintHelper
 import com.example.util.ReminderUtils
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -173,6 +175,7 @@ fun QrHubScreen(
                         QrHistoryView(
                             products = filteredQrProducts,
                             searchQuery = qrSearchQuery,
+                            shopProfile = shopProfile,
                             onSearchChange = { viewModel.qrSearchQuery.value = it },
                             onSelectProductForDetails = { scannedProductDetails = it },
                             onSelectProductForSale = { activeProductForSale = it },
@@ -315,7 +318,7 @@ fun QrHubScreen(
     createdProductPreview?.let { product ->
         QrPreviewDialog(
             product = product,
-            shopName = shopProfile?.shopName ?: "আমার ব্যবসা",
+            shopProfile = shopProfile,
             onDismiss = { createdProductPreview = null },
             onSellNow = {
                 createdProductPreview = null
@@ -1397,11 +1400,14 @@ fun QrCreateForm(
 fun QrHistoryView(
     products: List<ProductEntity>,
     searchQuery: String,
+    shopProfile: ShopProfileEntity?,
     onSearchChange: (String) -> Unit,
     onSelectProductForDetails: (ProductEntity) -> Unit,
     onSelectProductForSale: (ProductEntity) -> Unit,
     onViewQr: (ProductEntity) -> Unit
 ) {
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -1426,6 +1432,45 @@ fun QrHistoryView(
                 .testTag("qr_history_search_input")
         )
 
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Printing Actions Bar
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = {
+                    if (products.isNotEmpty()) {
+                        QrPrintHelper.printProductQrSheet(context, products, shopProfile)
+                    }
+                },
+                enabled = products.isNotEmpty(),
+                colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue700),
+                shape = RoundedCornerShape(10.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                modifier = Modifier.weight(1f).height(40.dp).testTag("btn_print_qr_sheet")
+            ) {
+                Icon(Icons.Default.Print, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("🖨️ A4 শিট প্রিন্ট (${BengaliFormatters.toBanglaNumber(products.size)})", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+
+            OutlinedButton(
+                onClick = {
+                    val samplePayQr = "bKash/Nagad/Rocket Merchant Pay: ${shopProfile?.phone ?: "01700000000"}"
+                    QrPrintHelper.printPaymentStandee(context, shopProfile, samplePayQr)
+                },
+                shape = RoundedCornerShape(10.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                modifier = Modifier.weight(1f).height(40.dp).testTag("btn_print_standee")
+            ) {
+                Icon(Icons.Default.Storefront, contentDescription = null, modifier = Modifier.size(16.dp), tint = DeepIndigo)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("🏪 পেমেন্ট পোস্টার", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = DeepIndigo)
+            }
+        }
+
         Spacer(modifier = Modifier.height(12.dp))
 
         if (products.isEmpty()) {
@@ -1444,7 +1489,10 @@ fun QrHistoryView(
                         product = product,
                         onClick = { onSelectProductForDetails(product) },
                         onSell = { onSelectProductForSale(product) },
-                        onViewQr = { onViewQr(product) }
+                        onViewQr = { onViewQr(product) },
+                        onPrint = {
+                            QrPrintHelper.printSingleProductQr(context, product, shopProfile)
+                        }
                     )
                 }
             }
@@ -1457,7 +1505,8 @@ fun QrProductHistoryCard(
     product: ProductEntity,
     onClick: () -> Unit,
     onSell: () -> Unit,
-    onViewQr: () -> Unit
+    onViewQr: () -> Unit,
+    onPrint: () -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -1537,18 +1586,33 @@ fun QrProductHistoryCard(
                 }
             }
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
+
+            // Print Sticker Icon Button
+            IconButton(
+                onClick = onPrint,
+                modifier = Modifier.size(36.dp).background(RoyalBlue50, CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Print,
+                    contentDescription = "প্রিন্ট",
+                    tint = RoyalBlue700,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(4.dp))
 
             IconButton(
                 onClick = onSell,
                 colors = IconButtonDefaults.filledIconButtonColors(containerColor = Emerald600),
-                modifier = Modifier.size(38.dp)
+                modifier = Modifier.size(36.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.PointOfSale,
                     contentDescription = "বিক্রি করুন",
                     tint = Color.White,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
@@ -1561,11 +1625,12 @@ fun QrProductHistoryCard(
 @Composable
 fun QrPreviewDialog(
     product: ProductEntity,
-    shopName: String,
+    shopProfile: ShopProfileEntity?,
     onDismiss: () -> Unit,
     onSellNow: () -> Unit
 ) {
     val context = LocalContext.current
+    val shopName = shopProfile?.shopName ?: "আমার ব্যবসা"
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -1588,7 +1653,7 @@ fun QrPreviewDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "QR Code প্রিভিউ",
+                        text = "QR Code প্রিভিউ ও প্রিন্ট",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = CharcoalDark
@@ -1661,7 +1726,26 @@ fun QrPreviewDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Print Sticker Button (Main Action)
+                Button(
+                    onClick = {
+                        QrPrintHelper.printSingleProductQr(context, product, shopProfile)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = RoyalBlue700),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(46.dp)
+                        .testTag("btn_print_single_qr")
+                ) {
+                    Icon(Icons.Default.Print, contentDescription = null, tint = Color.White)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("🖨️ স্টিকার প্রিন্ট করুন (Print QR Sticker)", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1682,7 +1766,7 @@ fun QrPreviewDialog(
 
                     Button(
                         onClick = onSellNow,
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        colors = ButtonDefaults.buttonColors(containerColor = Emerald600),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.weight(1f)
                     ) {

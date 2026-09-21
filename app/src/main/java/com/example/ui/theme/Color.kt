@@ -34,11 +34,40 @@ val Sky100 = Color(0xFFE0F2FE)
 val Sky50 = Color(0xFFF0F9FF)
 
 // Danger Red
+val CrimsonError = Color(0xFFDC2626)
+val Red900 = Color(0xFF7F1D1D)
+val Red800 = Color(0xFF991B1B)
 val Red700 = Color(0xFFB91C1C)
 val Red600 = Color(0xFFDC2626)
 val Red500 = Color(0xFFEF4444)
+val Red300 = Color(0xFFFCA5A5)
+val Red200 = Color(0xFFFECACA)
 val Red100 = Color(0xFFFEE2E2)
 val Red50 = Color(0xFFFEF2F2)
+
+// Amber / Warning
+val Amber900 = Color(0xFF78350F)
+val Amber800 = Color(0xFF92400E)
+val Amber700 = Color(0xFFB45309)
+val Amber600 = Color(0xFFD97706)
+val Amber500 = Color(0xFFF59E0B)
+val Amber300 = Color(0xFFFCD34D)
+val Amber200 = Color(0xFFFDE68A)
+val Amber100 = Color(0xFFFEF3C7)
+val Amber50 = Color(0xFFFFFBEB)
+
+// Emerald Shades
+val Emerald800 = Color(0xFF065F46)
+val Emerald300 = Color(0xFF6EE7B7)
+val Emerald200 = Color(0xFFA7F3D0)
+
+// Royal Blue Shades
+val RoyalBlue200 = Color(0xFFC7D2FE)
+
+// Slate Shades
+val Slate50 = Color(0xFFF8FAFC)
+val Slate100 = Color(0xFFF1F5F9)
+val Slate200 = Color(0xFFE2E8F0)
 
 // Clean Minimalism Backgrounds & Neutrals - Pure White Background
 val OffWhite = Color(0xFFFFFFFF)        // #FFFFFF Pure White App Background

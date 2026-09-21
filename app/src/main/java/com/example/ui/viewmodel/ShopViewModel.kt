@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.AppDatabase
+import com.example.data.local.CommunityCreditRecordEntity
 import com.example.data.local.MemoEntity
 import com.example.data.local.MemoItem
 import com.example.data.local.ProductEntity
@@ -11,6 +12,11 @@ import com.example.data.local.SaleTransactionEntity
 import com.example.data.local.ShopProfileEntity
 import com.example.data.local.ShopRepository
 import com.example.util.BengaliFormatters
+import com.example.util.CustomerTrustScoreEngine
+import com.example.util.MemoUtils
+import com.example.util.ParsedVoiceEntry
+import com.example.util.TrustScoreResult
+import com.example.util.VoiceTransactionType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +27,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -52,9 +59,10 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         val db = AppDatabase.getDatabase(application)
-        repository = ShopRepository(db.productDao(), db.saleDao(), db.shopProfileDao(), db.memoDao())
+        repository = ShopRepository(db.productDao(), db.saleDao(), db.shopProfileDao(), db.memoDao(), db.communityCreditDao())
         viewModelScope.launch {
             repository.getShopProfileOnce()
+            repository.seedSampleCommunityRecordsIfEmpty()
         }
     }
 
@@ -78,6 +86,10 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val productsWithQr: StateFlow<List<ProductEntity>> = repository.productsWithQr
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val lowStockProducts: StateFlow<List<ProductEntity>> = repository.allProducts
+        .map { list -> list.filter { it.stock <= 5 } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val totalStock: StateFlow<Int> = repository.totalStock
@@ -470,6 +482,163 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.clearAllData()
             _eventFlow.emit(UiEvent.ShowToast("✓ সকল তথ্য মুছে ফেলা হয়েছে"))
+        }
+    }
+
+    // Community Credit Records Flow
+    val communityCreditRecords: StateFlow<List<CommunityCreditRecordEntity>> = repository.allCommunityRecords
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /**
+     * Calculates AI Credit Trust Score for a customer by combining local transaction history and community reports.
+     */
+    suspend fun getCustomerTrustScore(name: String, phone: String?): TrustScoreResult {
+        val cleanPhone = phone?.replace(Regex("[^0-9]"), "")
+        val communityRecord = if (!cleanPhone.isNullOrBlank()) {
+            repository.getCommunityRecordByPhone(cleanPhone)
+        } else null
+
+        val localSales = allTransactions.value
+        val localMemos = allMemos.value
+
+        return CustomerTrustScoreEngine.calculateScore(
+            customerName = name,
+            customerPhone = phone,
+            localSales = localSales,
+            localMemos = localMemos,
+            communityRecord = communityRecord
+        )
+    }
+
+    /**
+     * Anonymously reports a defaulter customer to the decentralized Community Credit Register.
+     */
+    fun reportDefaulter(
+        phone: String,
+        customerName: String,
+        amount: Double,
+        note: String,
+        onSuccess: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val cleanPhone = phone.replace(Regex("[^0-9]"), "")
+            if (cleanPhone.length < 11) {
+                _eventFlow.emit(UiEvent.ShowToast("সঠিক মোবাইল নম্বর দিন (কমপক্ষে ১১ ডিজিট)", isError = true))
+                return@launch
+            }
+
+            repository.reportDefaulterToCommunity(
+                phone = cleanPhone,
+                customerName = customerName.trim(),
+                amount = amount,
+                note = note.trim()
+            )
+
+            _eventFlow.emit(UiEvent.ShowToast("✓ কাস্টমারকে বেনামে কমিউনিটি রিস্ক ডাটাবেজে ডিফল্টার মার্ক করা হয়েছে"))
+            onSuccess()
+        }
+    }
+
+    /**
+     * Removes an anonymous community report.
+     */
+    fun removeCommunityReport(record: CommunityCreditRecordEntity) {
+        viewModelScope.launch {
+            repository.removeCommunityReport(record)
+            _eventFlow.emit(UiEvent.ShowToast("কমিউনিটি রিপোর্ট প্রত্যাহার করা হয়েছে"))
+        }
+    }
+
+    /**
+     * Processes AI Voice-to-Ledger transaction.
+     */
+    fun processVoiceTransaction(
+        parsed: ParsedVoiceEntry,
+        onSuccess: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val shop = repository.getShopProfileOnce()
+            val memoNo = MemoUtils.generateMemoNumber()
+
+            when (parsed.transactionType) {
+                VoiceTransactionType.DUE_SALE -> {
+                    // Create Due Sale / Memo
+                    val memo = MemoEntity(
+                        memoNumber = memoNo,
+                        memoType = "বাকি মেমো (Due)",
+                        date = System.currentTimeMillis(),
+                        shopName = shop.shopName.ifBlank { "আমার ব্যবসা" },
+                        preparedBy = shop.ownerName,
+                        shopPhone = shop.phone,
+                        shopAddress = shop.address,
+                        customerName = parsed.customerName,
+                        customerPhone = parsed.customerPhone,
+                        itemsJson = MemoUtils.serializeItems(parsed.items),
+                        subtotal = parsed.totalAmount,
+                        grandTotal = parsed.totalAmount,
+                        paidAmount = parsed.paidAmount,
+                        dueAmount = parsed.dueAmount,
+                        paymentMethod = "বাকি",
+                        notes = "${parsed.notes}${if (parsed.promisedDueDateMillis != null) " | পরিশোধের প্রতিশ্রুত তারিখ: " + BengaliFormatters.formatDateBangla(parsed.promisedDueDateMillis) else ""}",
+                        createdAt = System.currentTimeMillis()
+                    )
+                    repository.insertMemo(memo)
+                    _eventFlow.emit(UiEvent.ShowToast("✓ মুখে বলা বাকির হিসাব (৳${BengaliFormatters.toBanglaCurrency(parsed.dueAmount)}) সংরক্ষিত হয়েছে"))
+                    _eventFlow.emit(UiEvent.MemoSaved(memo))
+                }
+
+                VoiceTransactionType.CASH_SALE -> {
+                    val memo = MemoEntity(
+                        memoNumber = memoNo,
+                        memoType = "ক্যাশ মেমো (Cash)",
+                        date = System.currentTimeMillis(),
+                        shopName = shop.shopName.ifBlank { "আমার ব্যবসা" },
+                        preparedBy = shop.ownerName,
+                        shopPhone = shop.phone,
+                        shopAddress = shop.address,
+                        customerName = parsed.customerName,
+                        customerPhone = parsed.customerPhone,
+                        itemsJson = MemoUtils.serializeItems(parsed.items),
+                        subtotal = parsed.totalAmount,
+                        grandTotal = parsed.totalAmount,
+                        paidAmount = parsed.totalAmount,
+                        dueAmount = 0.0,
+                        paymentMethod = "নগদ",
+                        notes = parsed.notes,
+                        createdAt = System.currentTimeMillis()
+                    )
+                    repository.insertMemo(memo)
+                    _eventFlow.emit(UiEvent.ShowToast("✓ মুখে বলা নগদ বিক্রি (৳${BengaliFormatters.toBanglaCurrency(parsed.totalAmount)}) সংরক্ষিত হয়েছে"))
+                    _eventFlow.emit(UiEvent.MemoSaved(memo))
+                }
+
+                VoiceTransactionType.PAYMENT_IN -> {
+                    // Payment received
+                    val memo = MemoEntity(
+                        memoNumber = memoNo,
+                        memoType = "জমা রশিদ (Payment In)",
+                        date = System.currentTimeMillis(),
+                        shopName = shop.shopName.ifBlank { "আমার ব্যবসা" },
+                        preparedBy = shop.ownerName,
+                        shopPhone = shop.phone,
+                        shopAddress = shop.address,
+                        customerName = parsed.customerName,
+                        customerPhone = parsed.customerPhone,
+                        itemsJson = MemoUtils.serializeItems(parsed.items),
+                        subtotal = parsed.totalAmount,
+                        grandTotal = parsed.totalAmount,
+                        paidAmount = parsed.totalAmount,
+                        dueAmount = 0.0,
+                        paymentMethod = "নগদ জমা",
+                        notes = "বকেয়া উসুল / জমা",
+                        createdAt = System.currentTimeMillis()
+                    )
+                    repository.insertMemo(memo)
+                    _eventFlow.emit(UiEvent.ShowToast("✓ ${parsed.customerName}-এর ৳${BengaliFormatters.toBanglaCurrency(parsed.totalAmount)} টাকা জমা নেওয়া হয়েছে"))
+                    _eventFlow.emit(UiEvent.PaymentPaid(parsed.customerName, parsed.totalAmount))
+                }
+            }
+            onSuccess()
         }
     }
 }

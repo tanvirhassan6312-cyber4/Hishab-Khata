@@ -26,12 +26,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ads.DynamicBottomAdBanner
+import com.example.ads.FullscreenInterstitialAdDialog
+import com.example.ads.SmartAdLifecycleManager
 import com.example.ads.StartIoAdManager
-import com.example.ads.StartIoBannerAd
+import com.example.ui.components.AtomicProximityDialog
+import com.example.ui.components.CustomerArrivalPopUp
+import com.example.ui.components.StartupPermissionHandler
 import com.example.ui.screens.*
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.ShopViewModel
 import com.example.ui.viewmodel.UiEvent
+import com.example.util.AtomicProximityEngine
+import com.example.util.NearbyCustomer
 
 enum class ScreenRoute {
     HOME,
@@ -41,6 +48,7 @@ enum class ScreenRoute {
     DAILY_LEDGER,
     PRODUCT_HISTORY,
     DUE_REMINDERS,
+    FAQ,
     SETTINGS
 }
 
@@ -74,6 +82,23 @@ fun MainAppContent(viewModel: ShopViewModel, activity: Activity? = null) {
     val context = LocalContext.current
     var currentScreen by remember { mutableStateOf(ScreenRoute.HOME) }
     var qrHubInitialSubTab by remember { mutableIntStateOf(0) }
+
+    val allTransactions by viewModel.allTransactions.collectAsStateWithLifecycle()
+    val shopProfile by viewModel.shopProfile.collectAsStateWithLifecycle()
+
+    var showProximityDialog by remember { mutableStateOf(false) }
+    var proximityCustomerForDialog by remember { mutableStateOf<NearbyCustomer?>(null) }
+
+    // Start proximity radar sync with active due transactions
+    LaunchedEffect(allTransactions) {
+        AtomicProximityEngine.startProximityRadar(context, allTransactions)
+    }
+
+    // Startup Camera & Audio Permission Handler (Prompts immediately on start, never again)
+    StartupPermissionHandler()
+
+    // Periodic smart background controller for bottom dynamic banner and periodic fullscreen ads
+    SmartAdLifecycleManager(activity = activity)
 
     // Listen to UiEvents (Toasts and Ad triggers)
     LaunchedEffect(Unit) {
@@ -117,8 +142,8 @@ fun MainAppContent(viewModel: ShopViewModel, activity: Activity? = null) {
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Start.io Banner Ad Container above Navigation Bar
-                StartIoBannerAd()
+                // Dynamic periodic bottom banner (appears smoothly, stays 15s, disappears for 40s, or can be dismissed)
+                DynamicBottomAdBanner()
 
                 Surface(
                     color = Color.White,
@@ -224,6 +249,9 @@ fun MainAppContent(viewModel: ShopViewModel, activity: Activity? = null) {
                         },
                         onShowSettings = {
                             currentScreen = ScreenRoute.SETTINGS
+                        },
+                        onShowFaq = {
+                            currentScreen = ScreenRoute.FAQ
                         }
                     )
                 }
@@ -274,6 +302,12 @@ fun MainAppContent(viewModel: ShopViewModel, activity: Activity? = null) {
                     )
                 }
 
+                ScreenRoute.FAQ -> {
+                    AiFaqScreen(
+                        onNavigateBack = { currentScreen = ScreenRoute.HOME }
+                    )
+                }
+
                 ScreenRoute.SETTINGS -> {
                     SettingsScreen(
                         viewModel = viewModel,
@@ -281,6 +315,33 @@ fun MainAppContent(viewModel: ShopViewModel, activity: Activity? = null) {
                     )
                 }
             }
+
+            // Customer Arrival Proximity Floating Pop-up Banner
+            CustomerArrivalPopUp(
+                onOpenSettlement = { customer ->
+                    proximityCustomerForDialog = customer
+                    showProximityDialog = true
+                }
+            )
+
+            // Atomic Proximity Pay & Contactless Due Settlement Full Dialog
+            if (showProximityDialog) {
+                AtomicProximityDialog(
+                    initialCustomer = proximityCustomerForDialog,
+                    shopProfile = shopProfile,
+                    allTransactions = allTransactions,
+                    onDismiss = {
+                        showProximityDialog = false
+                        proximityCustomerForDialog = null
+                    },
+                    onDueSettled = { tx ->
+                        viewModel.markDueAsPaid(tx)
+                    }
+                )
+            }
+
+            // Fullscreen Interstitial Ad Dialog Overlay
+            FullscreenInterstitialAdDialog(activity = activity)
         }
     }
 }

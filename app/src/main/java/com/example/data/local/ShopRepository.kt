@@ -1,5 +1,6 @@
 package com.example.data.local
 
+import com.example.util.CustomerTrustScoreEngine
 import kotlinx.coroutines.flow.Flow
 import java.util.Calendar
 
@@ -7,7 +8,8 @@ class ShopRepository(
     private val productDao: ProductDao,
     private val saleDao: SaleDao,
     private val shopProfileDao: ShopProfileDao,
-    private val memoDao: MemoDao
+    private val memoDao: MemoDao,
+    private val communityCreditDao: CommunityCreditDao
 ) {
     val allProducts: Flow<List<ProductEntity>> = productDao.getAllProducts()
     val productsWithQr: Flow<List<ProductEntity>> = productDao.getProductsWithQr()
@@ -19,6 +21,70 @@ class ShopRepository(
     val allPendingDueTotal: Flow<Double?> = saleDao.getAllPendingDueTotal()
     val shopProfile: Flow<ShopProfileEntity?> = shopProfileDao.getShopProfile()
     val allMemos: Flow<List<MemoEntity>> = memoDao.getAllMemos()
+    val allCommunityRecords: Flow<List<CommunityCreditRecordEntity>> = communityCreditDao.getAllRecords()
+
+    suspend fun getCommunityRecordByPhone(phone: String): CommunityCreditRecordEntity? {
+        val cleanPhone = phone.replace(Regex("[^0-9]"), "")
+        if (cleanPhone.isBlank()) return null
+        return communityCreditDao.getRecordByPhone(cleanPhone)
+    }
+
+    suspend fun reportDefaulterToCommunity(
+        phone: String,
+        customerName: String,
+        amount: Double,
+        note: String
+    ): Long {
+        val cleanPhone = phone.replace(Regex("[^0-9]"), "")
+        val hash = CustomerTrustScoreEngine.hashPhoneNumber(cleanPhone)
+        val existing = communityCreditDao.getRecordByPhone(cleanPhone)
+        val reportCount = (existing?.defaultReportsCount ?: 0) + 1
+        val record = CommunityCreditRecordEntity(
+            id = existing?.id ?: 0,
+            customerPhone = cleanPhone,
+            phoneHash = hash,
+            customerName = customerName,
+            defaultReportsCount = reportCount,
+            totalOverdueReported = (existing?.totalOverdueReported ?: 0.0) + amount,
+            isDefaulter = true,
+            riskLevel = "HIGH",
+            anonymousNote = note.ifBlank { "অন্য ১টি দোকানে অপরিশোধিত বাকি রয়েছে।" },
+            reportedTimestamp = System.currentTimeMillis()
+        )
+        return communityCreditDao.insertOrUpdate(record)
+    }
+
+    suspend fun removeCommunityReport(record: CommunityCreditRecordEntity) {
+        communityCreditDao.delete(record)
+    }
+
+    suspend fun seedSampleCommunityRecordsIfEmpty() {
+        if (communityCreditDao.getCount() == 0) {
+            // Seed a few sample community anonymous alert records
+            val sample1 = CommunityCreditRecordEntity(
+                customerPhone = "01711000000",
+                phoneHash = CustomerTrustScoreEngine.hashPhoneNumber("01711000000"),
+                customerName = "করিম (নমুনা)",
+                defaultReportsCount = 2,
+                totalOverdueReported = 6500.0,
+                isDefaulter = true,
+                riskLevel = "HIGH",
+                anonymousNote = "অন্য ২টি দোকানে বড় অংকের বকেয়া পরিশোধ করেনি।"
+            )
+            val sample2 = CommunityCreditRecordEntity(
+                customerPhone = "01819000000",
+                phoneHash = CustomerTrustScoreEngine.hashPhoneNumber("01819000000"),
+                customerName = "আলমগীর (নমুনা)",
+                defaultReportsCount = 1,
+                totalOverdueReported = 3200.0,
+                isDefaulter = true,
+                riskLevel = "HIGH",
+                anonymousNote = "অন্য ১টি দোকানে মেয়াদ শেষ হওয়ার পরও টাকা দেয়নি।"
+            )
+            communityCreditDao.insertOrUpdate(sample1)
+            communityCreditDao.insertOrUpdate(sample2)
+        }
+    }
 
     fun searchProducts(query: String): Flow<List<ProductEntity>> = productDao.searchProducts(query)
     fun searchTransactions(query: String): Flow<List<SaleTransactionEntity>> = saleDao.searchTransactions(query)

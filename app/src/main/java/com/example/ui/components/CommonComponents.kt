@@ -41,7 +41,8 @@ fun DokanTopBar(
     subtitle: String? = null,
     dueAlertCount: Int = 0,
     onNotificationClick: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onFaqClick: () -> Unit = {}
 ) {
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -79,12 +80,33 @@ fun DokanTopBar(
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
+                // FAQ AI Assistant Button
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.White,
+                    border = BorderStroke(1.dp, CardBorder),
+                    shadowElevation = 1.dp,
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clickable { onFaqClick() }
+                        .testTag("faq_topbar_button")
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.HelpOutline,
+                            contentDescription = "FAQ ও AI সহায়তা",
+                            tint = Emerald700,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+
                 // Due Notification Button with clean white card & badge
                 Surface(
                     shape = RoundedCornerShape(16.dp),
@@ -92,7 +114,7 @@ fun DokanTopBar(
                     border = BorderStroke(1.dp, CardBorder),
                     shadowElevation = 1.dp,
                     modifier = Modifier
-                        .size(46.dp)
+                        .size(44.dp)
                         .clickable { onNotificationClick() }
                         .testTag("notification_button")
                 ) {

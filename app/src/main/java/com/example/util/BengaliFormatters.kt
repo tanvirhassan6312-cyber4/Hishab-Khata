@@ -21,6 +21,24 @@ object BengaliFormatters {
         return sb.toString()
     }
 
+    fun fromBanglaDigits(str: String): String {
+        val sb = StringBuilder()
+        for (char in str) {
+            val idx = banglaDigits.indexOf(char)
+            if (idx != -1) {
+                sb.append(idx)
+            } else {
+                sb.append(char)
+            }
+        }
+        return sb.toString()
+    }
+
+    fun fromBanglaNumber(str: String): Double? {
+        val clean = fromBanglaDigits(str).replace(Regex("[^0-9.]"), "")
+        return clean.toDoubleOrNull()
+    }
+
     fun toBanglaNumber(number: Number): String {
         val str = if (number is Double || number is Float) {
             if (number.toDouble() % 1.0 == 0.0) {

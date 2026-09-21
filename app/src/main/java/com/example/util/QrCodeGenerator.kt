@@ -47,4 +47,17 @@ object QrCodeGenerator {
             null
         }
     }
+
+    fun generateQrBase64(
+        content: String,
+        size: Int = 512,
+        primaryColor: Int = Color.parseColor("#0F2942"),
+        backgroundColor: Int = Color.WHITE
+    ): String {
+        val bitmap = generateQrBitmap(content, size, primaryColor, backgroundColor) ?: return ""
+        val outputStream = java.io.ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+        val byteArray = outputStream.toByteArray()
+        return android.util.Base64.encodeToString(byteArray, android.util.Base64.NO_WRAP)
+    }
 }
