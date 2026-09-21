@@ -59,31 +59,7 @@ class ShopRepository(
     }
 
     suspend fun seedSampleCommunityRecordsIfEmpty() {
-        if (communityCreditDao.getCount() == 0) {
-            // Seed a few sample community anonymous alert records
-            val sample1 = CommunityCreditRecordEntity(
-                customerPhone = "01711000000",
-                phoneHash = CustomerTrustScoreEngine.hashPhoneNumber("01711000000"),
-                customerName = "করিম (নমুনা)",
-                defaultReportsCount = 2,
-                totalOverdueReported = 6500.0,
-                isDefaulter = true,
-                riskLevel = "HIGH",
-                anonymousNote = "অন্য ২টি দোকানে বড় অংকের বকেয়া পরিশোধ করেনি।"
-            )
-            val sample2 = CommunityCreditRecordEntity(
-                customerPhone = "01819000000",
-                phoneHash = CustomerTrustScoreEngine.hashPhoneNumber("01819000000"),
-                customerName = "আলমগীর (নমুনা)",
-                defaultReportsCount = 1,
-                totalOverdueReported = 3200.0,
-                isDefaulter = true,
-                riskLevel = "HIGH",
-                anonymousNote = "অন্য ১টি দোকানে মেয়াদ শেষ হওয়ার পরও টাকা দেয়নি।"
-            )
-            communityCreditDao.insertOrUpdate(sample1)
-            communityCreditDao.insertOrUpdate(sample2)
-        }
+        // No automatic seed data - data will only be added by user
     }
 
     fun searchProducts(query: String): Flow<List<ProductEntity>> = productDao.searchProducts(query)
@@ -201,6 +177,8 @@ class ShopRepository(
     suspend fun updateMemo(memo: MemoEntity) = memoDao.updateMemo(memo)
     suspend fun deleteMemo(memo: MemoEntity) = memoDao.deleteMemo(memo)
     suspend fun getMemoById(id: Long): MemoEntity? = memoDao.getMemoById(id)
+
+    suspend fun deleteTransaction(transaction: SaleTransactionEntity) = saleDao.deleteTransaction(transaction)
 
     suspend fun markDueAsPaid(transactionId: Long) {
         saleDao.markAsPaid(transactionId)

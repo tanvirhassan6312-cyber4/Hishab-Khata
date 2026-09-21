@@ -830,6 +830,57 @@
             from { height: 6px; }
             to { height: 26px; }
         }
+
+        .empty-state {
+            text-align: center;
+            padding: 24px 16px;
+            color: var(--text-light);
+            font-size: 13px;
+            background: #f8fafc;
+            border: 1px dashed var(--border-light);
+            border-radius: 12px;
+            margin: 8px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-delete {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .btn-delete:hover {
+            background: #fee2e2;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 13px;
+            box-sizing: border-box;
+            margin-bottom: 8px;
+            outline: none;
+            background: #ffffff;
+            font-family: inherit;
+        }
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(26,35,126,0.1);
+        }
     </style>
 </head>
 <body>
@@ -867,7 +918,7 @@
                     <div class="header-icons">
                         <button class="icon-btn" onclick="openRemindersModal()" title="বকেয়া তাগাদা">
                             🔔
-                            <div class="badge-count">২</div>
+                            <div class="badge-count" id="headerDueBadge">০</div>
                         </button>
                         <button class="icon-btn" onclick="switchTab('faq')" title="AI FAQ">
                             ❓
@@ -884,19 +935,19 @@
                         <div class="stats-grid">
                             <div class="stat-box sale">
                                 <div class="stat-label">আজকের মোট বিক্রি</div>
-                                <div class="stat-value">৳ ৩,৭৫০</div>
+                                <div class="stat-value" id="homeTotalSale">৳ ০</div>
                             </div>
                             <div class="stat-box cash">
                                 <div class="stat-label">নগদ জমা</div>
-                                <div class="stat-value">৳ ২,৪০০</div>
+                                <div class="stat-value" id="homeTotalCash">৳ ০</div>
                             </div>
                             <div class="stat-box due">
                                 <div class="stat-label">মোট বকেয়া (বাকি)</div>
-                                <div class="stat-value">৳ ১,৩৫০</div>
+                                <div class="stat-value" id="homeTotalDue">৳ ০</div>
                             </div>
                             <div class="stat-box profit">
                                 <div class="stat-label">আনুমানিক লাভ</div>
-                                <div class="stat-value">৳ ৬২০</div>
+                                <div class="stat-value" id="homeTotalProfit">৳ ০</div>
                             </div>
                         </div>
 
@@ -906,10 +957,10 @@
                                 <div class="radar-pulse-icon">⚡</div>
                                 <div class="proximity-info">
                                     <h4>অ্যাটোমিক প্রক্সিমিটি পে (Live)</h4>
-                                    <p>রহিম ভাই নিকটে আছেন • বকেয়া: ৳ ৪০০</p>
+                                    <p id="homeProximityDesc">কোনো বকেয়া কাস্টমার নেই • নতুন বিক্রি ও বকেয়া যোগ করুন</p>
                                 </div>
                             </div>
-                            <span class="tag-pill">টাচলেস পে</span>
+                            <span class="tag-pill" id="homeProximityTag">টাচলেস পে</span>
                         </div>
 
                         <!-- Quick 4x Action Buttons -->
@@ -926,9 +977,9 @@
                                 <div class="icon-wrap" style="background:#ecfdf5; color:#10b981;">📱</div>
                                 <span>কিউআর হাব</span>
                             </div>
-                            <div class="action-tile" onclick="switchTab('memo')">
-                                <div class="icon-wrap" style="background:#f0f9ff; color:#0284c7;">📦</div>
-                                <span>পণ্য ও স্টক</span>
+                            <div class="action-tile" onclick="openAddTxModal()">
+                                <div class="icon-wrap" style="background:#f0f9ff; color:#0284c7;">➕</div>
+                                <span>বিক্রি যোগ</span>
                             </div>
                         </div>
 
@@ -957,42 +1008,13 @@
                         </div>
 
                         <!-- Recent Transactions -->
-                        <div class="section-header">
+                        <div class="section-header" style="display:flex; justify-content:space-between; align-items:center;">
                             <h3>সাম্প্রতিক লেনদেন</h3>
-                            <span style="font-size:11px; color:#1a237e; cursor:pointer;" onclick="switchTab('due')">সব দেখুন</span>
+                            <button class="btn-primary" style="margin:0; padding:5px 10px; font-size:11px; width:auto;" onclick="openAddTxModal()">+ নতুন হিসাব যোগ</button>
                         </div>
 
-                        <div class="tx-list">
-                            <div class="tx-item">
-                                <div class="tx-left">
-                                    <div class="tx-icon" style="background:#ecfdf5; color:#10b981;">✓</div>
-                                    <div>
-                                        <div class="tx-title">নগদ ক্যাশ মেমো #১০৪২</div>
-                                        <div class="tx-date">আজ, দুপুর ০১:১৫ • সয়াবিন তেল, চিনি</div>
-                                    </div>
-                                </div>
-                                <div class="tx-amount green">+ ৳ ৫৪০</div>
-                            </div>
-                            <div class="tx-item">
-                                <div class="tx-left">
-                                    <div class="tx-icon" style="background:#fff7ed; color:#f27d26;">⌛</div>
-                                    <div>
-                                        <div class="tx-title">বাকি বিক্রি - রহিম ভাই</div>
-                                        <div class="tx-date">আজ, সকাল ১১:৩০ • মিনিকেট চাল ৫ কেজি</div>
-                                    </div>
-                                </div>
-                                <div class="tx-amount orange">৳ ৪০০</div>
-                            </div>
-                            <div class="tx-item">
-                                <div class="tx-left">
-                                    <div class="tx-icon" style="background:#ecfdf5; color:#10b981;">✓</div>
-                                    <div>
-                                        <div class="tx-title">বিকাশ মার্চেন্ট কিউআর পেমেন্ট</div>
-                                        <div class="tx-date">আজ, সকাল ১০:১০ • কাস্টমার পেমেন্ট</div>
-                                    </div>
-                                </div>
-                                <div class="tx-amount green">+ ৳ ৮৫০</div>
-                            </div>
+                        <div class="tx-list" id="homeTxList">
+                            <!-- Populated dynamically via JS. Starts empty. -->
                         </div>
 
                         <!-- Dynamic Start.io Ad Banner -->
@@ -1009,29 +1031,30 @@
                     <div class="screen-view" id="screenMemo">
                         <div class="app-card">
                             <h3 style="font-size:14px; margin-bottom:8px; color:var(--primary);">পণ্য নির্বাচন ও কার্ট</h3>
-                            <div style="display:flex; flex-direction:column; gap:8px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
-                                    <div>
-                                        <strong style="font-size:13px;">চিনি (Sugar) - ১ কেজি</strong>
-                                        <div style="font-size:11px; color:#64748b;">৳ ১৩০ x ১</div>
-                                    </div>
-                                    <strong style="font-size:13px;">৳ ১৩০</strong>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
-                                    <div>
-                                        <strong style="font-size:13px;">মিনিকেট চাল - ৫ কেজি</strong>
-                                        <div style="font-size:11px; color:#64748b;">৳ ৭০ x ৫ কেজি</div>
-                                    </div>
-                                    <strong style="font-size:13px;">৳ ৩৫০</strong>
-                                </div>
+                            <div id="cartItemsList" style="display:flex; flex-direction:column; gap:8px;">
+                                <!-- Populated dynamically. Starts empty. -->
                             </div>
                             <div style="display:flex; justify-content:space-between; margin-top:12px; font-size:15px; font-weight:700;">
                                 <span>মোট বিল:</span>
-                                <span style="color:var(--primary);">৳ ৪৮০</span>
+                                <span id="cartTotalBill" style="color:var(--primary);">৳ ০</span>
                             </div>
                             <div style="display:flex; gap:8px; margin-top:12px;">
-                                <button class="btn-primary" style="flex:1;" onclick="openReceiptModal()">🧾 মেমো প্রিন্ট / সংরক্ষণ</button>
-                                <button class="btn-emerald" style="flex:1;" onclick="alert('ক্যাশ পেমেন্ট সম্পন্ন হয়েছে এবং ক্যাশ রেজিস্টারে ৪8০ টাকা যোগ হয়েছে।')">💵 নগদ আদায়</button>
+                                <button class="btn-primary" style="flex:1;" onclick="openReceiptModal()">🧾 মেমো প্রিন্ট / প্রিভিউ</button>
+                                <button class="btn-emerald" style="flex:1;" onclick="checkoutCart('cash')">💵 নগদ আদায়</button>
+                            </div>
+                            <button class="btn-primary" style="background:#fff7ed; color:#ea580c; border:1px solid #fed7aa; margin-top:6px;" onclick="checkoutCart('due')">📒 বাকি বিক্রি হিসেবে সংরক্ষণ</button>
+                        </div>
+
+                        <!-- Add Item to Cart Card -->
+                        <div class="app-card">
+                            <h4 style="font-size:13px; margin-bottom:8px; color:var(--primary);">+ কার্টে নতুন পণ্য যোগ করুন</h4>
+                            <div style="display:flex; flex-direction:column; gap:6px;">
+                                <input type="text" id="quickProdName" class="form-input" placeholder="পণ্যের নাম (যেমন: চিনি ১ কেজি)">
+                                <div style="display:flex; gap:6px;">
+                                    <input type="text" id="quickProdQty" class="form-input" placeholder="পরিমাণ (যেমন: ১ প্যাকেট)" style="flex:1;">
+                                    <input type="number" id="quickProdPrice" class="form-input" placeholder="মূল্য ৳" style="flex:1;">
+                                </div>
+                                <button class="btn-primary" style="margin-top:0;" onclick="addQuickCartItem()">+ কার্টে যোগ করুন</button>
                             </div>
                         </div>
 
@@ -1081,45 +1104,16 @@
                     <div class="screen-view" id="screenDue">
                         <div class="app-card" style="background:#fff7ed; border-color:#fed7aa;">
                             <div style="font-size:12px; color:#9a3412;">মোট কাস্টমার বাকি (বকেয়া)</div>
-                            <div style="font-size:22px; font-weight:700; color:#ea580c;">৳ ১,৩৫০</div>
+                            <div class="stat-value" id="dueScreenTotal" style="font-size:22px; font-weight:700; color:#ea580c;">৳ ০</div>
                         </div>
 
-                        <div class="section-header">
+                        <div class="section-header" style="display:flex; justify-content:space-between; align-items:center;">
                             <h3>বকেয়া কাস্টমার তালিকা</h3>
+                            <button class="btn-primary" style="margin:0; padding:5px 10px; font-size:11px; width:auto; background:#ea580c;" onclick="openAddDueModal()">+ নতুন বাকি যোগ</button>
                         </div>
 
-                        <div class="tx-list">
-                            <div class="app-card" style="padding:10px 12px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <div>
-                                        <strong style="font-size:14px;">রহিম ভাই</strong>
-                                        <div style="font-size:11px; color:#64748b;">০১৮xxxxxxxx • ৫ দিন বাকি</div>
-                                    </div>
-                                    <div style="text-align:right;">
-                                        <strong style="font-size:15px; color:#ea580c;">৳ ৪০০</strong>
-                                        <div style="font-size:10px; color:#10b981;">⚡ নিকটে আছেন</div>
-                                    </div>
-                                </div>
-                                <div style="display:flex; gap:6px; margin-top:10px;">
-                                    <button class="btn-emerald" style="padding:6px; font-size:12px; margin-top:0;" onclick="openProximityModal()">⚡ টাচলেস পে</button>
-                                    <button class="btn-primary" style="padding:6px; font-size:12px; margin-top:0; background:#f1f5f9; color:#1a237e;" onclick="sendDueReminder('রহিম ভাই', '৪০০')">🔔 তাগাদা পাঠান</button>
-                                </div>
-                            </div>
-
-                            <div class="app-card" style="padding:10px 12px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <div>
-                                        <strong style="font-size:14px;">করিম চাচা</strong>
-                                        <div style="font-size:11px; color:#64748b;">০১৭xxxxxxxx • ১২ দিন বাকি</div>
-                                    </div>
-                                    <div style="text-align:right;">
-                                        <strong style="font-size:15px; color:#ea580c;">৳ ৯৫০</strong>
-                                    </div>
-                                </div>
-                                <div style="display:flex; gap:6px; margin-top:10px;">
-                                    <button class="btn-primary" style="padding:6px; font-size:12px; margin-top:0;" onclick="sendDueReminder('করিম চাচা', '৯৫০')">🔔 হোয়াটসঅ্যাপে তাগাদা</button>
-                                </div>
-                            </div>
+                        <div class="tx-list" id="dueScreenList">
+                            <!-- Populated dynamically via JS. Starts empty. -->
                         </div>
                     </div>
 
@@ -1220,26 +1214,553 @@
             <div style="background:#f8fafc; border:1px dashed #cbd5e1; padding:12px; border-radius:10px; font-size:12px;">
                 <div style="text-align:center; margin-bottom:8px;">
                     <strong>তাফসির স্টোর</strong><br>
-                    মেমো নং: #১০৪৩ • তারিখ: ২০২৬-০৯-২১
+                    <span id="memoReceiptInfo">মেমো নং: #১০০১ • তারিখ: আজ</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">
-                    <span>চিনি (১ কেজি)</span>
-                    <span>৳ ১৩০</span>
+                <div id="receiptItemsContainer">
+                    <!-- Populated dynamically -->
                 </div>
-                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding:4px 0;">
-                    <span>মিনিকেট চাল (৫ কেজি)</span>
-                    <span>৳ ৩৫০</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; font-weight:bold; margin-top:8px;">
+                <div style="display:flex; justify-content:space-between; font-weight:bold; margin-top:8px; border-top:1px solid #cbd5e1; padding-top:6px;">
                     <span>সর্বমোট পরিশোধিত:</span>
-                    <span style="color:#10b981;">৳ ৪৮০</span>
+                    <span id="receiptTotalAmount" style="color:#10b981;">৳ ০</span>
                 </div>
             </div>
             <button class="btn-primary" onclick="window.print()">🖨️ প্রিন্ট করুন</button>
         </div>
     </div>
 
+    <!-- Modal 3: Add Transaction Modal -->
+    <div class="modal-overlay" id="addTxModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>+ নতুন বিক্রি / লেনদেন যোগ করুন</h3>
+                <button class="close-btn" onclick="closeModal('addTxModal')">×</button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <div>
+                    <label style="font-size:12px; font-weight:600; color:#1a237e;">পণ্য বা বিবরণের নাম</label>
+                    <input type="text" id="addTxTitle" class="form-input" placeholder="যেমন: সয়াবিন তেল ২ লিটার, চিনি">
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <div style="flex:1;">
+                        <label style="font-size:12px; font-weight:600; color:#1a237e;">মোট মূল্য (৳)</label>
+                        <input type="number" id="addTxAmount" class="form-input" placeholder="যেমন: ৫৪০" oninput="calculateTxDue()">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:12px; font-weight:600; color:#10b981;">নগদ আদায় (৳)</label>
+                        <input type="number" id="addTxPaid" class="form-input" placeholder="যেমন: ৫৪০" oninput="calculateTxDue()">
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <div style="flex:1;">
+                        <label style="font-size:12px; font-weight:600; color:#ea580c;">বকেয়া / বাকি (৳)</label>
+                        <input type="number" id="addTxDue" class="form-input" placeholder="০" readonly style="background:#f8fafc;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:12px; font-weight:600; color:#1a237e;">কাস্টমারের নাম</label>
+                        <input type="text" id="addTxCustomer" class="form-input" placeholder="বাকি থাকলে নাম লিখুন">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:12px; font-weight:600; color:#1a237e;">মোবাইল নম্বর (ঐচ্ছিক)</label>
+                    <input type="text" id="addTxPhone" class="form-input" placeholder="০১৭১১-XXXXXX">
+                </div>
+                <button class="btn-primary" onclick="saveNewTransaction()">✓ হিসাব সেভ করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Add Due Khata Record Modal -->
+    <div class="modal-overlay" id="addDueModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>+ নতুন বাকি হিসাব যোগ করুন</h3>
+                <button class="close-btn" onclick="closeModal('addDueModal')">×</button>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <div>
+                    <label style="font-size:12px; font-weight:600; color:#1a237e;">কাস্টমারের নাম *</label>
+                    <input type="text" id="addDueName" class="form-input" placeholder="যেমন: রহিম ভাই / করিম চাচা">
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <div style="flex:1;">
+                        <label style="font-size:12px; font-weight:600; color:#ea580c;">বকেয়া টাকার পরিমাণ (৳) *</label>
+                        <input type="number" id="addDueAmount" class="form-input" placeholder="যেমন: ৪০০">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:12px; font-weight:600; color:#1a237e;">মোবাইল নম্বর</label>
+                        <input type="text" id="addDuePhone" class="form-input" placeholder="০১৮১৯-XXXXXX">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:12px; font-weight:600; color:#1a237e;">পণ্য বা বিবরণের বিবরণ</label>
+                    <input type="text" id="addDueNotes" class="form-input" placeholder="যেমন: মিনিকেট চাল ৫ কেজি">
+                </div>
+                <button class="btn-primary" style="background:#ea580c;" onclick="saveNewDue()">✓ বাকি খাতায় যোগ করুন</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // State Management - Starts completely empty as requested by user
+        let transactions = JSON.parse(localStorage.getItem('dokan_txs') || '[]');
+        let dueItems = JSON.parse(localStorage.getItem('dokan_dues') || '[]');
+        let cartItems = JSON.parse(localStorage.getItem('dokan_cart') || '[]');
+
+        function saveStorage() {
+            localStorage.setItem('dokan_txs', JSON.stringify(transactions));
+            localStorage.setItem('dokan_dues', JSON.stringify(dueItems));
+            localStorage.setItem('dokan_cart', JSON.stringify(cartItems));
+        }
+
+        // Render UI with Current State
+        function renderAll() {
+            const totalSale = transactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+            const totalCash = transactions.reduce((sum, t) => sum + (Number(t.paid) || 0), 0);
+            const totalDue = dueItems.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+            const totalProfit = Math.round(totalSale * 0.16);
+
+            // Update Home Stats
+            document.getElementById('homeTotalSale').innerText = '৳ ' + totalSale.toLocaleString('bn-BD');
+            document.getElementById('homeTotalCash').innerText = '৳ ' + totalCash.toLocaleString('bn-BD');
+            document.getElementById('homeTotalDue').innerText = '৳ ' + totalDue.toLocaleString('bn-BD');
+            document.getElementById('homeTotalProfit').innerText = '৳ ' + totalProfit.toLocaleString('bn-BD');
+
+            // Header Badges & Due Screen Total
+            document.getElementById('headerDueBadge').innerText = dueItems.length.toLocaleString('bn-BD');
+            document.getElementById('dueScreenTotal').innerText = '৳ ' + totalDue.toLocaleString('bn-BD');
+
+            // Update Proximity Pay Card on Home
+            const proxDesc = document.getElementById('homeProximityDesc');
+            if (dueItems.length > 0) {
+                proxDesc.innerText = `${dueItems[0].name} নিকটে আছেন • বকেয়া: ৳ ${dueItems[0].amount.toLocaleString('bn-BD')}`;
+            } else {
+                proxDesc.innerText = "কোনো বকেয়া কাস্টমার নেই • নতুন বিক্রি ও বকেয়া যোগ করুন";
+            }
+
+            // Render Home Recent Transactions List
+            const txListEl = document.getElementById('homeTxList');
+            if (transactions.length === 0) {
+                txListEl.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size:24px;">📦</div>
+                        <div style="font-weight:600; color:#334155;">কোনো লেনদেন এখনো যোগ করা হয়নি</div>
+                        <div style="font-size:11px; color:#64748b;">হিসাব খাতা খালি রয়েছে। নিচের বাটন চেপে নতুন বিক্রি যোগ করুন।</div>
+                        <button class="btn-primary" style="margin-top:8px; padding:6px 14px; font-size:12px; width:auto;" onclick="openAddTxModal()">+ নতুন বিক্রি যোগ করুন</button>
+                    </div>
+                `;
+            } else {
+                txListEl.innerHTML = transactions.map((t, idx) => `
+                    <div class="tx-item">
+                        <div class="tx-left">
+                            <div class="tx-icon" style="background:${t.isDue ? '#fff7ed' : '#ecfdf5'}; color:${t.isDue ? '#f27d26' : '#10b981'};">
+                                ${t.isDue ? '⌛' : '✓'}
+                            </div>
+                            <div>
+                                <div class="tx-title">${t.title}</div>
+                                <div class="tx-date">${t.date || 'আজ'} • ${t.details || (t.isDue ? 'বাকি লেনদেন' : 'নগদ বিক্রি')}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div class="tx-amount ${t.isDue ? 'orange' : 'green'}">
+                                ${t.isDue ? '' : '+ '}৳ ${Number(t.amount).toLocaleString('bn-BD')}
+                            </div>
+                            <button class="btn-delete" title="এই হিসাবটি কেটে ফেলুন" onclick="deleteTransaction(${idx})">
+                                🗑️ কাটুন
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Render Cart on Memo / POS Screen
+            const cartListEl = document.getElementById('cartItemsList');
+            const cartTotalEl = document.getElementById('cartTotalBill');
+            const cartTotal = cartItems.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+            cartTotalEl.innerText = '৳ ' + cartTotal.toLocaleString('bn-BD');
+
+            if (cartItems.length === 0) {
+                cartListEl.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size:20px;">🛒</div>
+                        <div>কার্টে কোনো পণ্য নেই। নিচে পণ্য যোগ করুন।</div>
+                    </div>
+                `;
+            } else {
+                cartListEl.innerHTML = cartItems.map((item, idx) => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
+                        <div>
+                            <strong style="font-size:13px;">${item.name}</strong>
+                            <div style="font-size:11px; color:#64748b;">${item.qty || '১টি'}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <strong style="font-size:13px;">৳ ${Number(item.price).toLocaleString('bn-BD')}</strong>
+                            <button class="btn-delete" onclick="deleteCartItem(${idx})">✕</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Render Due Ledger Screen
+            const dueListEl = document.getElementById('dueScreenList');
+            if (dueItems.length === 0) {
+                dueListEl.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size:24px;">📒</div>
+                        <div style="font-weight:600; color:#334155;">খাতায় কোনো বকেয়া হিসাব নেই</div>
+                        <div style="font-size:11px; color:#64748b;">দোকানের সব বাকি পরিশোধিত অথবা এখনো কোনো বাকি যোগ করা হয়নি।</div>
+                        <button class="btn-primary" style="margin-top:8px; padding:6px 14px; font-size:12px; width:auto; background:#ea580c;" onclick="openAddDueModal()">+ নতুন বাকি যোগ করুন</button>
+                    </div>
+                `;
+            } else {
+                dueListEl.innerHTML = dueItems.map((d, idx) => `
+                    <div class="app-card" style="padding:10px 12px; margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <strong style="font-size:14px; color:#1e293b;">${d.name}</strong>
+                                <div style="font-size:11px; color:#64748b;">${d.phone || 'মোবাইল নেই'} • ${d.desc || 'বাকি বিক্রি'}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <strong style="font-size:15px; color:#ea580c;">৳ ${Number(d.amount).toLocaleString('bn-BD')}</strong>
+                                <div style="margin-top:4px;">
+                                    <button class="btn-delete" title="বাকি খাতা থেকে মুছে ফেলুন" onclick="deleteDueItem(${idx})">🗑️ কাটুন</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px; margin-top:8px;">
+                            <button class="btn-emerald" style="padding:6px; font-size:12px; margin-top:0;" onclick="settleSpecificDue(${idx})">⚡ টাচলেস পে</button>
+                            <button class="btn-primary" style="padding:6px; font-size:12px; margin-top:0; background:#f1f5f9; color:#1a237e;" onclick="sendDueReminder('${d.name}', '${d.amount}')">🔔 তাগাদা পাঠান</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Add / Delete Actions
+        function openAddTxModal() {
+            document.getElementById('addTxTitle').value = '';
+            document.getElementById('addTxAmount').value = '';
+            document.getElementById('addTxPaid').value = '';
+            document.getElementById('addTxDue').value = '';
+            document.getElementById('addTxCustomer').value = '';
+            document.getElementById('addTxPhone').value = '';
+            document.getElementById('addTxModal').style.display = 'flex';
+        }
+
+        function calculateTxDue() {
+            const amount = Number(document.getElementById('addTxAmount').value) || 0;
+            const paid = Number(document.getElementById('addTxPaid').value) || 0;
+            const due = Math.max(0, amount - paid);
+            document.getElementById('addTxDue').value = due;
+        }
+
+        function saveNewTransaction() {
+            const title = document.getElementById('addTxTitle').value.trim() || "সাধারণ বিক্রি";
+            const amount = Number(document.getElementById('addTxAmount').value) || 0;
+            const paid = Number(document.getElementById('addTxPaid').value) || 0;
+            const customer = document.getElementById('addTxCustomer').value.trim();
+            const phone = document.getElementById('addTxPhone').value.trim();
+            const due = Math.max(0, amount - paid);
+
+            if (amount <= 0) {
+                alert("দয়া করে সঠিক টাকার পরিমাণ লিখুন।");
+                return;
+            }
+
+            const isDue = due > 0;
+            const newTx = {
+                title: isDue ? `বাকি বিক্রি - ${customer || 'কাস্টমার'}` : `নগদ বিক্রি (${title})`,
+                details: title,
+                amount: amount,
+                paid: paid,
+                due: due,
+                isDue: isDue,
+                customer: customer,
+                phone: phone,
+                date: "আজ, " + new Date().toLocaleTimeString('bn-BD', {hour: '2-digit', minute:'2-digit'})
+            };
+
+            transactions.unshift(newTx);
+
+            if (isDue) {
+                dueItems.unshift({
+                    name: customer || "কাস্টমার",
+                    phone: phone || "০১৭XXXXXXXX",
+                    amount: due,
+                    desc: title
+                });
+            }
+
+            saveStorage();
+            renderAll();
+            closeModal('addTxModal');
+            alert("✓ নতুন হিসাব সফলভাবে যুক্ত হয়েছে!");
+        }
+
+        function deleteTransaction(index) {
+            if (confirm("আপনি কি এই লেনদেন হিসাবটি মুছে ফেলতে চান?")) {
+                transactions.splice(index, 1);
+                saveStorage();
+                renderAll();
+            }
+        }
+
+        function openAddDueModal() {
+            document.getElementById('addDueName').value = '';
+            document.getElementById('addDueAmount').value = '';
+            document.getElementById('addDuePhone').value = '';
+            document.getElementById('addDueNotes').value = '';
+            document.getElementById('addDueModal').style.display = 'flex';
+        }
+
+        function saveNewDue() {
+            const name = document.getElementById('addDueName').value.trim();
+            const amount = Number(document.getElementById('addDueAmount').value) || 0;
+            const phone = document.getElementById('addDuePhone').value.trim();
+            const notes = document.getElementById('addDueNotes').value.trim() || "বাকি পণ্য";
+
+            if (!name || amount <= 0) {
+                alert("কাস্টমারের নাম এবং সঠিক বকেয়া টাকার পরিমাণ দিন।");
+                return;
+            }
+
+            dueItems.unshift({
+                name: name,
+                phone: phone || "০১৭XXXXXXXX",
+                amount: amount,
+                desc: notes
+            });
+
+            transactions.unshift({
+                title: `বাকি বিক্রি - ${name}`,
+                details: notes,
+                amount: amount,
+                paid: 0,
+                due: amount,
+                isDue: true,
+                customer: name,
+                phone: phone,
+                date: "আজ, " + new Date().toLocaleTimeString('bn-BD', {hour: '2-digit', minute:'2-digit'})
+            });
+
+            saveStorage();
+            renderAll();
+            closeModal('addDueModal');
+            alert("✓ বাকি খাতায় হিসাব সফলভাবে যুক্ত হয়েছে!");
+        }
+
+        function deleteDueItem(index) {
+            const item = dueItems[index];
+            if (confirm(`${item.name}-এর ৳${item.amount} টাকার বকেয়া হিসাবটি মুছে ফেলতে চান?`)) {
+                dueItems.splice(index, 1);
+                saveStorage();
+                renderAll();
+            }
+        }
+
+        function settleSpecificDue(index) {
+            const item = dueItems[index];
+            dueItems.splice(index, 1);
+            transactions.unshift({
+                title: `বাকি পরিশোধ - ${item.name}`,
+                details: "টাচলেস পে / সরাসরি পরিশোধ",
+                amount: item.amount,
+                paid: item.amount,
+                due: 0,
+                isDue: false,
+                date: "আজ, " + new Date().toLocaleTimeString('bn-BD', {hour: '2-digit', minute:'2-digit'})
+            });
+            saveStorage();
+            renderAll();
+            alert(`✓ ${item.name}-এর ৳${item.amount} টাকার বাকি সফলভাবে পরিশোধ চিহ্নিত হয়েছে!`);
+        }
+
+        // Cart Actions on Screen 2 (Memo)
+        function addQuickCartItem() {
+            const name = document.getElementById('quickProdName').value.trim();
+            const qty = document.getElementById('quickProdQty').value.trim() || "১টি";
+            const price = Number(document.getElementById('quickProdPrice').value) || 0;
+
+            if (!name || price <= 0) {
+                alert("পণ্যের নাম ও সঠিক মূল্য লিখুন।");
+                return;
+            }
+
+            cartItems.push({ name: name, qty: qty, price: price });
+            document.getElementById('quickProdName').value = '';
+            document.getElementById('quickProdQty').value = '';
+            document.getElementById('quickProdPrice').value = '';
+
+            saveStorage();
+            renderAll();
+        }
+
+        function deleteCartItem(index) {
+            cartItems.splice(index, 1);
+            saveStorage();
+            renderAll();
+        }
+
+        function checkoutCart(type) {
+            if (cartItems.length === 0) {
+                alert("কার্ট খালি! প্রথমে পণ্য যোগ করুন।");
+                return;
+            }
+
+            const total = cartItems.reduce((sum, item) => sum + item.price, 0);
+            const summary = cartItems.map(i => i.name).join(', ');
+
+            if (type === 'cash') {
+                transactions.unshift({
+                    title: `নগদ মেমো বিক্রি`,
+                    details: summary,
+                    amount: total,
+                    paid: total,
+                    due: 0,
+                    isDue: false,
+                    date: "আজ, " + new Date().toLocaleTimeString('bn-BD', {hour: '2-digit', minute:'2-digit'})
+                });
+                cartItems = [];
+                saveStorage();
+                renderAll();
+                alert(`✓ ৳${total} টাকার নগদ বিক্রি সম্পন্ন হয়েছে এবং ক্যাশ রেজিস্টারে যোগ হয়েছে।`);
+            } else {
+                const customer = prompt("বাকি কাস্টমারের নাম লিখুন:", "রহিম ভাই");
+                if (!customer) return;
+                const phone = prompt("কাস্টমারের মোবাইল নম্বর (ঐচ্ছিক):", "০১৭XXXXXXXX");
+
+                dueItems.unshift({
+                    name: customer,
+                    phone: phone || "০১৭XXXXXXXX",
+                    amount: total,
+                    desc: summary
+                });
+
+                transactions.unshift({
+                    title: `বাকি বিক্রি - ${customer}`,
+                    details: summary,
+                    amount: total,
+                    paid: 0,
+                    due: total,
+                    isDue: true,
+                    customer: customer,
+                    phone: phone,
+                    date: "আজ, " + new Date().toLocaleTimeString('bn-BD', {hour: '2-digit', minute:'2-digit'})
+                });
+
+                cartItems = [];
+                saveStorage();
+                renderAll();
+                alert(`✓ ${customer}-এর নামে ৳${total} টাকার বাকি হিসেবে সংরক্ষণ করা হয়েছে।`);
+            }
+        }
+
+        // Receipt Modal
+        function openReceiptModal() {
+            const container = document.getElementById('receiptItemsContainer');
+            const totalEl = document.getElementById('receiptTotalAmount');
+            const infoEl = document.getElementById('memoReceiptInfo');
+
+            infoEl.innerText = `মেমো নং: #${Math.floor(1000 + Math.random() * 9000)} • তারিখ: ${new Date().toLocaleDateString('bn-BD')}`;
+
+            if (cartItems.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:8px; color:#64748b;">কার্টে কোনো পণ্য নেই।</div>`;
+                totalEl.innerText = '৳ ০';
+            } else {
+                const total = cartItems.reduce((sum, item) => sum + item.price, 0);
+                container.innerHTML = cartItems.map(item => `
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding:4px 0;">
+                        <span>${item.name} (${item.qty || '১টি'})</span>
+                        <span>৳ ${Number(item.price).toLocaleString('bn-BD')}</span>
+                    </div>
+                `).join('');
+                totalEl.innerText = '৳ ' + total.toLocaleString('bn-BD');
+            }
+            document.getElementById('receiptModal').style.display = 'flex';
+        }
+
+        // Proximity Pay Simulation
+        function openProximityModal() {
+            if (dueItems.length === 0) {
+                alert("বর্তমানে কোনো বকেয়া কাস্টমার নেই। নতুন বাকি যোগ করলে প্রক্সিমিটি পে স্বয়ংক্রিয়ভাবে সক্রিয় হবে।");
+                return;
+            }
+            document.getElementById('proximityModal').style.display = 'flex';
+        }
+
+        function executeProximitySettlement() {
+            if (dueItems.length === 0) return;
+
+            const targetDue = dueItems[0];
+            const wave = document.getElementById('soundWave');
+            const status = document.getElementById('proximityStatus');
+            const btn = document.getElementById('btnSettleDue');
+
+            wave.style.display = 'flex';
+            status.innerText = "এনক্রিপ্টেড অডিও হ্যান্ডশেক চলছে...";
+            status.style.color = "#f27d26";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                wave.style.display = 'none';
+                status.innerText = `✓ পরিশোধ সফল! ${targetDue.name}-এর ${targetDue.amount} টাকা পরিশোধিত হয়েছে।`;
+                status.style.color = "#10b981";
+                btn.style.display = 'none';
+
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, ctx.currentTime);
+                    osc.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } catch(e){}
+
+                setTimeout(() => {
+                    closeModal('proximityModal');
+                    btn.disabled = false;
+                    btn.style.display = 'block';
+                    status.innerText = "১৮.৫ kHz অডিও রাডার সিগন্যাল সক্রিয়";
+
+                    // Settle first item
+                    settleSpecificDue(0);
+                }, 1600);
+            }, 1200);
+        }
+
+        // Voice Ledger Simulation
+        function simulateVoiceLedger() {
+            const promptVal = prompt("ভয়েস হিসাব ইনপুট (যেমন: 'করিম চাচা আলু ৫ কেজি বাকি দিলেন ২৫০ টাকা'):", "করিম চাচা আলু ৫ কেজি বাকি দিলেন ২৫০ টাকা");
+            if (promptVal) {
+                // Auto add to transactions & dues
+                const customer = "করিম চাচা";
+                const amount = 250;
+                const details = "আলু ৫ কেজি";
+
+                dueItems.unshift({
+                    name: customer,
+                    phone: "০১৭XXXXXXXX",
+                    amount: amount,
+                    desc: details
+                });
+
+                transactions.unshift({
+                    title: `বাকি বিক্রি - ${customer}`,
+                    details: details,
+                    amount: amount,
+                    paid: 0,
+                    due: amount,
+                    isDue: true,
+                    customer: customer,
+                    date: "আজ, " + new Date().toLocaleTimeString('bn-BD', {hour: '2-digit', minute:'2-digit'})
+                });
+
+                saveStorage();
+                renderAll();
+                alert(`✓ ভয়েস হিসাব সফলভাবে যোগ হয়েছে!\nকাস্টমার: ${customer}\nবাকি: ৳${amount}\nখাতায় সংরক্ষিত হয়েছে।`);
+            }
+        }
+
         // Switch between Smartphone Frame and Laptop Wide View
         function setDeviceView(mode) {
             const frame = document.getElementById('deviceFrame');
@@ -1259,11 +1780,9 @@
 
         // Tab Switching Logic
         function switchTab(tabName) {
-            // Hide all screens
             const screens = document.querySelectorAll('.screen-view');
             screens.forEach(s => s.classList.remove('active'));
 
-            // Remove active from nav items
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(n => n.classList.remove('active'));
 
@@ -1293,14 +1812,6 @@
         }
 
         // Modal Handlers
-        function openProximityModal() {
-            document.getElementById('proximityModal').style.display = 'flex';
-        }
-
-        function openReceiptModal() {
-            document.getElementById('receiptModal').style.display = 'flex';
-        }
-
         function openRemindersModal() {
             switchTab('due');
         }
@@ -1309,60 +1820,18 @@
             document.getElementById(id).style.display = 'none';
         }
 
-        // Proximity Pay Simulation
-        function executeProximitySettlement() {
-            const wave = document.getElementById('soundWave');
-            const status = document.getElementById('proximityStatus');
-            const btn = document.getElementById('btnSettleDue');
-
-            wave.style.display = 'flex';
-            status.innerText = "এনক্রিপ্টেড অডিও হ্যান্ডশেক চলছে...";
-            status.style.color = "#f27d26";
-            btn.disabled = true;
-
-            setTimeout(() => {
-                wave.style.display = 'none';
-                status.innerText = "✓ পরিশোধ সফল! রহিম ভাইয়ের ৪০০ টাকা বাকি পরিশোধিত হয়েছে।";
-                status.style.color = "#10b981";
-                btn.style.display = 'none';
-
-                // Play pleasant subtle audio beep
-                try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    const osc = ctx.createOscillator();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(880, ctx.currentTime);
-                    osc.connect(ctx.destination);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.3);
-                } catch(e){}
-
-                setTimeout(() => {
-                    closeModal('proximityModal');
-                    btn.disabled = false;
-                    btn.style.display = 'block';
-                    status.innerText = "১৮.৫ kHz অডিও রাডার সিগন্যাল সক্রিয়";
-                    alert("স্বয়ংক্রিয় ডিজিটাল রসিদ রহিম ভাইয়ের মোবাইলে পুশ করা হয়েছে।");
-                }, 1800);
-            }, 1200);
-        }
-
-        // Voice Ledger Simulation
-        function simulateVoiceLedger() {
-            const promptVal = prompt("ভয়েস হিসাব ইনপুট (যেমন: 'করিম চাচা আলু ৫ কেজি বাকি দিলেন ২৫০ টাকা'):", "করিম চাচা আলু ৫ কেজি বাকি দিলেন ২৫০ টাকা");
-            if (promptVal) {
-                alert("ভয়েস পার্স সফল!\nকাস্টমার: করিম চাচা\nপণ্য: আলু ৫ কেজি\nবাকি এন্ট্রি: ২৫০ টাকা খাতা এবং ডাটাবেজে সংরক্ষণ করা হয়েছে।");
-            }
-        }
-
         // Barcode Scanner Simulation
         function simulateBarcodeScan() {
+            const dummyItem = { name: "তীর সয়াবিন তেল (১ লিটার)", qty: "১ বোতল", price: 175 };
+            cartItems.push(dummyItem);
+            saveStorage();
+            renderAll();
             alert("বারকোড স্ক্যান সফল!\nপণ্য: তীর সয়াবিন তেল (১ লিটার)\nমূল্য: ১৭৫ টাকা\nকার্টে যুক্ত করা হয়েছে।");
         }
 
         // Due Reminder Send
         function sendDueReminder(name, amount) {
-            alert(`${name}-কে হোয়াটসঅ্যাপ ও এসএমএসে বাকি তাগাদা বার্তা পাঠানো হয়েছে:\n'শ্রদ্ধেয় ${name}, তাফসির স্টোরে আপনার বকেয়ার পরিমাণ ${amount} টাকা। পরিশোধের অনুরোধ করা হলো।'`);
+            alert(`${name}-কে হোয়াটসঅ্যাপ ও এসএমএসে বাকি তাগাদা বার্তা পাঠানো হয়েছে:\n'শ্রদ্ধেয় ${name}, তাফসির স্টোরে আপনার বকেয়ার পরিমাণ ৳${amount}। পরিশোধের অনুরোধ করা হলো।'`);
         }
 
         // AI Assistant Ask Question
@@ -1376,10 +1845,12 @@
             newBubble.className = 'faq-bubble';
 
             let answer = "আপনার প্রশ্নের জন্য ধন্যবাদ। এই ফিচারটি সম্পূর্ণ অফলাইনে কাজ করে এবং ডেভলপার তাফসির এবং তানভির কর্তৃক সর্বোচ্চ সিকিউরিটি সহকারে তৈরি করা হয়েছে।";
-            if (q.includes("বাকি") || q.includes("তাগাদা")) {
-                answer = "বাকি খাতা ট্যাবে গিয়ে যেকোনো কাস্টমারের নামের পাশে 'তাগাদা পাঠান' চাপলে স্বয়ংক্রিয়ভাবে মেসেজ চলে যাবে।";
+            if (q.includes("বাকি") || q.includes("তাগাদা") || q.includes("মুছ") || q.includes("কাট")) {
+                answer = "বাকি খাতা বা হোম স্ক্রিনে প্রতিটি লেনদেনের পাশে লাল রঙের 'কাটুন' বাটনে চাপ দিয়ে যেকোনো সময় ভুল হিসাব মুছে ফেলতে পারবেন।";
             } else if (q.includes("মেমো") || q.includes("প্রিন্ট")) {
-                answer = "মেমো ট্যাবে পণ্য সিলেক্ট করে 'মেমো প্রিন্ট' চাপলেই ব্লুটুথ পিওএস বা যেকোনো প্রিন্টারে প্রিন্ট নেওয়া যাবে।";
+                answer = "মেমো ট্যাবে পণ্য যোগ করে 'মেমো প্রিন্ট' চাপলেই ব্লুটুথ পিওএস বা যেকোনো প্রিন্টারে প্রিন্ট নেওয়া যাবে।";
+            } else if (q.includes("যোগ")) {
+                answer = "হোম স্ক্রিনের '+ নতুন হিসাব যোগ' বা বাকি খাতার '+ নতুন বাকি যোগ' বাটন চেপে সহজে নিজের মতো ডাটা এন্ট্রি করতে পারবেন।";
             }
 
             newBubble.innerHTML = `<div class="faq-q">প্রশ্ন: ${q}</div><div class="faq-a">AI উত্তর: ${answer}</div>`;
@@ -1391,6 +1862,11 @@
         function triggerApkDownload() {
             alert("অ্যান্ড্রয়েড ফোনে সরাসরি ইনস্টল করার জন্য:\nGoogle AI Studio-র উপরের ডানপাশের Settings / Export মেনু থেকে 'Download APK' বাটনে ক্লিক করে সরাসরি অফিসিয়াল APK ফাইলটি নামিয়ে নিন।");
         }
+
+        // Initial render on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderAll();
+        });
     </script>
 </body>
 </html>

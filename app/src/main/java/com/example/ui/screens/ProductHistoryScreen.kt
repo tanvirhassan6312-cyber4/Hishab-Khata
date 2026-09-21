@@ -119,6 +119,10 @@ fun ProductHistoryScreen(
             onPayDue = {
                 viewModel.markDueAsPaid(tx)
                 selectedTxForDetails = null
+            },
+            onDelete = {
+                viewModel.deleteTransaction(tx)
+                selectedTxForDetails = null
             }
         )
     }

@@ -62,7 +62,6 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
         repository = ShopRepository(db.productDao(), db.saleDao(), db.shopProfileDao(), db.memoDao(), db.communityCreditDao())
         viewModelScope.launch {
             repository.getShopProfileOnce()
-            repository.seedSampleCommunityRecordsIfEmpty()
         }
     }
 
@@ -439,6 +438,13 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.deleteMemo(memo)
             _eventFlow.emit(UiEvent.ShowToast("মেমো মুছে ফেলা হয়েছে"))
+        }
+    }
+
+    fun deleteTransaction(transaction: SaleTransactionEntity) {
+        viewModelScope.launch {
+            repository.deleteTransaction(transaction)
+            _eventFlow.emit(UiEvent.ShowToast("লেনদেনের হিসাব মুছে ফেলা হয়েছে"))
         }
     }
 

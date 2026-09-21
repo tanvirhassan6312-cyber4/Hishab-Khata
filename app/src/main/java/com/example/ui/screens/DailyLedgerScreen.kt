@@ -304,6 +304,10 @@ fun DailyLedgerScreen(
             onPayDue = {
                 viewModel.markDueAsPaid(tx)
                 selectedTransactionForDetails = null
+            },
+            onDelete = {
+                viewModel.deleteTransaction(tx)
+                selectedTransactionForDetails = null
             }
         )
     }
@@ -491,19 +495,36 @@ fun TransactionDetailDialog(
     shopName: String,
     onDismiss: () -> Unit,
     onCheckTrustScore: () -> Unit = {},
-    onPayDue: () -> Unit
+    onPayDue: () -> Unit,
+    onDelete: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                text = "বিক্রয়ের সম্পূর্ণ বিবরণ",
-                fontWeight = FontWeight.Bold,
-                color = CharcoalDark,
-                fontSize = 18.sp
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "বিক্রয়ের সম্পূর্ণ বিবরণ",
+                    fontWeight = FontWeight.Bold,
+                    color = CharcoalDark,
+                    fontSize = 18.sp
+                )
+                if (onDelete != null) {
+                    IconButton(onClick = { showDeleteConfirm = true }) {
+                        Icon(
+                            imageVector = Icons.Default.DeleteOutline,
+                            contentDescription = "হিসাব মুছুন",
+                            tint = Red600
+                        )
+                    }
+                }
+            }
         },
         text = {
             Column(
@@ -556,6 +577,18 @@ fun TransactionDetailDialog(
         },
         confirmButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (onDelete != null) {
+                    OutlinedButton(
+                        onClick = { showDeleteConfirm = true },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Red600),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("মুছুন")
+                    }
+                }
+
                 // Share receipt
                 OutlinedButton(
                     onClick = {
@@ -597,6 +630,31 @@ fun TransactionDetailDialog(
         containerColor = Color.White,
         shape = RoundedCornerShape(20.dp)
     )
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("হিসাবটি মুছে ফেলতে চান?") },
+            text = { Text("এই বিক্রির হিসাব মুছে ফেললে খাতা ও ডাটাবেজ থেকে রেকর্ডটি সম্পূর্ণ মুছে যাবে।") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteConfirm = false
+                        onDelete?.invoke()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Red600)
+                ) {
+                    Text("হ্যাঁ, মুছে ফেলুন")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text("বাতিল")
+                }
+            },
+            containerColor = Color.White
+        )
+    }
 }
 
 @Composable

@@ -261,6 +261,7 @@ fun DueRemindersScreen(
                             shopName = shopProfile?.shopName ?: "আমার ব্যবসা",
                             shopkeeperName = shopProfile?.ownerName ?: "তানভির আহমেদ",
                             onPayDue = { viewModel.markDueAsPaid(tx) },
+                            onDeleteDue = { viewModel.deleteTransaction(tx) },
                             onAcousticPay = {
                                 selectedProximityCustomer = NearbyCustomer(
                                     name = tx.customerName ?: "গ্রাহক",
@@ -302,9 +303,11 @@ fun DueReminderItemCard(
     shopName: String,
     shopkeeperName: String,
     onPayDue: () -> Unit,
+    onDeleteDue: (() -> Unit)? = null,
     onAcousticPay: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     Card(
         shape = RoundedCornerShape(18.dp),
@@ -364,19 +367,36 @@ fun DueReminderItemCard(
                     }
                 }
 
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = BengaliFormatters.toBanglaCurrency(tx.dueAmount),
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Orange600,
-                            fontSize = 17.sp
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = BengaliFormatters.toBanglaCurrency(tx.dueAmount),
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Orange600,
+                                fontSize = 17.sp
+                            )
                         )
-                    )
-                    Text(
-                        text = "বাকি টাকা",
-                        style = MaterialTheme.typography.labelSmall.copy(color = CharcoalLight, fontSize = 10.sp)
-                    )
+                        Text(
+                            text = "বাকি টাকা",
+                            style = MaterialTheme.typography.labelSmall.copy(color = CharcoalLight, fontSize = 10.sp)
+                        )
+                    }
+
+                    if (onDeleteDue != null) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        IconButton(
+                            onClick = { showDeleteConfirm = true },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteOutline,
+                                contentDescription = "বাকি রেকর্ড মুছুন",
+                                tint = Red600,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
                 }
             }
 
@@ -526,5 +546,30 @@ fun DueReminderItemCard(
                 }
             }
         }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("বাকি হিসাবটি মুছে ফেলতে চান?") },
+            text = { Text("${tx.customerName ?: "কাস্টমার"}-এর ৳${tx.dueAmount} টাকার এই বাকি হিসাবটি খাতা থেকে মুছে ফেলা হবে।") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteConfirm = false
+                        onDeleteDue?.invoke()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Red600)
+                ) {
+                    Text("হ্যাঁ, মুছে ফেলুন")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text("বাতিল")
+                }
+            },
+            containerColor = Color.White
+        )
     }
 }
