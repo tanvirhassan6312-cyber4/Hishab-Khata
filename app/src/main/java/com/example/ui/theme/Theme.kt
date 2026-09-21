@@ -33,7 +33,7 @@ private val LightColorScheme = lightColorScheme(
     errorContainer = Red50,
     onErrorContainer = Red700,
 
-    background = OffWhite,
+    background = PureWhite,
     onBackground = DarkCharcoal,
     surface = CardBackground,
     onSurface = DarkCharcoal,
@@ -42,34 +42,34 @@ private val LightColorScheme = lightColorScheme(
     outline = CardBorder
 )
 
-private val DarkColorScheme = darkColorScheme(
-    primary = RoyalBlue500,
+private val DarkColorScheme = lightColorScheme(
+    primary = DeepIndigo,
     onPrimary = Color.White,
-    primaryContainer = RoyalBlue900,
-    onPrimaryContainer = RoyalBlue100,
+    primaryContainer = RoyalBlue50,
+    onPrimaryContainer = DeepIndigo,
 
     secondary = Emerald500,
     onSecondary = Color.White,
-    secondaryContainer = Emerald900,
-    onSecondaryContainer = Emerald100,
+    secondaryContainer = Emerald50,
+    onSecondaryContainer = Emerald900,
 
     tertiary = Sky500,
     onTertiary = Color.White,
-    tertiaryContainer = Sky700,
-    onTertiaryContainer = Sky100,
+    tertiaryContainer = Sky100,
+    onTertiaryContainer = Sky700,
 
-    error = Red500,
+    error = Red600,
     onError = Color.White,
-    errorContainer = Red700,
-    onErrorContainer = Red100,
+    errorContainer = Red50,
+    onErrorContainer = Red700,
 
-    background = Color(0xFF0B1120),
-    onBackground = Color(0xFFF1F5F9),
-    surface = Color(0xFF1E293B),
-    onSurface = Color(0xFFF8FAFC),
-    surfaceVariant = Color(0xFF334155),
-    onSurfaceVariant = Color(0xFFCBD5E1),
-    outline = Color(0xFF475569)
+    background = PureWhite,
+    onBackground = DarkCharcoal,
+    surface = CardBackground,
+    onSurface = DarkCharcoal,
+    surfaceVariant = LightGraySurface,
+    onSurfaceVariant = CharcoalMedium,
+    outline = CardBorder
 )
 
 @Composable

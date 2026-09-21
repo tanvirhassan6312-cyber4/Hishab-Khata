@@ -2,182 +2,1395 @@
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>দোকান ও QR হিসাব - রিটেল শপ ম্যানেজার</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-pure: #ffffff;
+            --bg-subtle: #f8fafc;
+            --border-light: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --primary: #1a237e;
+            --primary-light: #eef2ff;
+            --primary-hover: #283593;
+            --emerald: #10b981;
+            --emerald-light: #ecfdf5;
+            --emerald-dark: #065f46;
+            --orange: #f27d26;
+            --orange-light: #fff7ed;
+            --red: #ef4444;
+            --red-light: #fef2f2;
+            --text-dark: #0d1b2a;
+            --text-medium: #334155;
+            --text-muted: #64748b;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             font-family: 'Hind Siliguri', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
-        body {
-            background-color: #0f172a;
-            color: #f8fafc;
-            line-height: 1.6;
+
+        /* Pure White Background for Entire Page and Body */
+        html, body {
+            background-color: #ffffff !important;
+            color: var(--text-dark);
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 30px 20px;
+
+        /* Top Laptop Toolbar */
+        .laptop-topbar {
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--border-light);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.03);
         }
-        header {
-            text-align: center;
-            padding: 40px 0 20px;
-        }
-        .badge {
-            display: inline-block;
-            background: rgba(16, 185, 129, 0.15);
-            color: #10b981;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-        h1 {
-            font-size: 2.4rem;
-            color: #ffffff;
-            margin-bottom: 12px;
-            font-weight: 700;
-        }
-        .subtitle {
-            font-size: 1.15rem;
-            color: #94a3b8;
-            max-width: 600px;
-            margin: 0 auto 24px;
-        }
-        .dev-card {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 16px 24px;
-            display: inline-flex;
+
+        .brand-info {
+            display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
         }
-        .dev-badge {
-            background: #2563eb;
-            color: white;
-            padding: 4px 10px;
+
+        .brand-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), #3949ab);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .brand-text h1 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+
+        .dev-tag {
+            font-size: 12px;
+            color: var(--emerald-dark);
+            background: var(--emerald-light);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 2px 8px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-top: 2px;
+            font-weight: 600;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .view-btn {
+            background: #ffffff;
+            border: 1px solid var(--border-strong);
+            color: var(--text-medium);
+            padding: 7px 14px;
             border-radius: 8px;
             font-size: 13px;
             font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
         }
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 20px;
-            margin: 40px 0;
+
+        .view-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
         }
-        .feature-card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 24px;
-            transition: transform 0.2s ease, border-color 0.2s ease;
+
+        .view-btn.active {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
         }
-        .feature-card:hover {
-            transform: translateY(-4px);
-            border-color: #10b981;
+
+        .apk-btn {
+            background: var(--emerald);
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
         }
-        .feature-icon {
-            font-size: 28px;
-            margin-bottom: 14px;
-            display: inline-block;
+
+        .apk-btn:hover {
+            background: var(--emerald-dark);
         }
-        .feature-card h3 {
-            font-size: 1.25rem;
-            color: #f1f5f9;
-            margin-bottom: 8px;
+
+        /* Layout Container */
+        .page-viewport {
+            min-height: calc(100vh - 65px);
+            background-color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 10px;
         }
-        .feature-card p {
-            font-size: 0.95rem;
-            color: #94a3b8;
+
+        /* Smartphone Frame (on laptops/desktops) */
+        .mobile-device-frame {
+            width: 100%;
+            max-width: 420px;
+            height: 840px;
+            background-color: #ffffff;
+            border: 8px solid #0f172a;
+            border-radius: 42px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
         }
-        .cta-section {
-            text-align: center;
-            background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
-            border: 1px solid #059669;
+
+        /* Wide View on Laptops */
+        .mobile-device-frame.wide-mode {
+            max-width: 900px;
+            height: auto;
+            min-height: 800px;
+            border: 1px solid var(--border-light);
             border-radius: 20px;
-            padding: 40px 20px;
-            margin: 40px 0;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
         }
-        .cta-btn {
-            display: inline-block;
+
+        /* Mobile Screen Native Fit */
+        @media (max-width: 600px) {
+            .laptop-topbar {
+                display: none;
+            }
+            .page-viewport {
+                padding: 0;
+                min-height: 100vh;
+                align-items: flex-start;
+            }
+            .mobile-device-frame {
+                max-width: 100%;
+                height: 100vh;
+                border: none;
+                border-radius: 0;
+                box-shadow: none;
+            }
+        }
+
+        /* Device Notch / Punch Hole */
+        .device-camera {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 12px;
+            background: #0f172a;
+            border-radius: 10px;
+            z-index: 50;
+        }
+
+        @media (max-width: 600px) {
+            .device-camera {
+                display: none;
+            }
+        }
+
+        .wide-mode .device-camera {
+            display: none;
+        }
+
+        /* Inner App Shell */
+        .app-shell {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* App Top Bar */
+        .app-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--border-light);
+            padding: 14px 16px;
+            padding-top: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 20;
+        }
+
+        .header-title-box h2 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1.2;
+        }
+
+        .header-title-box p {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .header-icons {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-light);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            color: var(--primary);
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .badge-count {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--red);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main Scrollable View Area */
+        .app-body {
+            flex: 1;
+            overflow-y: auto;
+            background-color: #ffffff;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding-bottom: 90px;
+        }
+
+        /* Cards on White Background */
+        .app-card {
+            background-color: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 14px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+            transition: border-color 0.2s;
+        }
+
+        .app-card:hover {
+            border-color: var(--border-strong);
+        }
+
+        /* 1. Today Summary Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-box {
+            background-color: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 10px 12px;
+        }
+
+        .stat-box.sale {
+            border-left: 4px solid var(--emerald);
+        }
+        .stat-box.cash {
+            border-left: 4px solid var(--primary);
+        }
+        .stat-box.due {
+            border-left: 4px solid var(--orange);
+        }
+        .stat-box.profit {
+            border-left: 4px solid #0284c7;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-top: 2px;
+        }
+
+        /* 2. Atomic Proximity Pay Card */
+        .proximity-card {
+            background: #ffffff;
+            border: 1.5px solid #10b981;
+            border-radius: 16px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.08);
+            transition: all 0.2s;
+        }
+
+        .proximity-card:hover {
+            background: #f0fdf4;
+            transform: translateY(-1px);
+        }
+
+        .proximity-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .radar-pulse-icon {
+            width: 38px;
+            height: 38px;
+            background: var(--emerald-light);
+            color: var(--emerald-dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            position: relative;
+        }
+
+        .radar-pulse-icon::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--emerald);
+            animation: pulse-ring 2s infinite ease-out;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+
+        .proximity-info h4 {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--emerald-dark);
+        }
+
+        .proximity-info p {
+            font-size: 11px;
+            color: var(--text-medium);
+        }
+
+        .tag-pill {
             background: #10b981;
             color: white;
-            font-size: 1.1rem;
+            font-size: 11px;
             font-weight: 600;
-            padding: 14px 32px;
-            border-radius: 30px;
-            text-decoration: none;
-            transition: background 0.2s;
-            margin-top: 15px;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            padding: 4px 8px;
+            border-radius: 20px;
         }
-        .cta-btn:hover {
-            background: #059669;
+
+        /* 3. Quick Actions 4x Grid */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
         }
-        footer {
+
+        .action-tile {
+            background-color: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 10px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
             text-align: center;
-            padding: 30px 0;
-            color: #64748b;
-            font-size: 0.9rem;
-            border-top: 1px solid #1e293b;
+        }
+
+        .action-tile:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .action-tile .icon-wrap {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .action-tile span {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* 4. Voice Ledger Banner */
+        .voice-card {
+            background: #ffffff;
+            border: 1px solid var(--primary-light);
+            border-left: 4px solid var(--primary);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .voice-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mic-icon-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* 5. Developer & FAQ Card */
+        .dev-faq-card {
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .dev-faq-card:hover {
+            background: var(--bg-subtle);
+        }
+
+        .dev-faq-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* 6. Recent Transactions List */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 4px;
+        }
+
+        .section-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .tx-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tx-item {
+            background-color: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .tx-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tx-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .tx-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .tx-date {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .tx-amount {
+            font-size: 14px;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .tx-amount.green {
+            color: var(--emerald-dark);
+        }
+
+        .tx-amount.orange {
+            color: var(--orange);
+        }
+
+        /* Bottom Dynamic Ad Banner (Start.io) */
+        .bottom-ad-bar {
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            margin-top: 6px;
+        }
+
+        .ad-pill {
+            font-size: 9px;
+            background: #f1f5f9;
+            color: var(--text-muted);
+            border: 0.5px solid #cbd5e1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* App Bottom Navigation Bar */
+        .app-bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 64px;
+            background-color: #ffffff;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 4px;
+            z-index: 30;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            color: var(--text-muted);
+            cursor: pointer;
+            flex: 1;
+            padding: 6px 0;
+            transition: color 0.2s;
+            text-decoration: none;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item .nav-icon {
+            font-size: 18px;
+        }
+
+        .nav-item span {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Modal Dialogs */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(2px);
+            z-index: 90;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-box {
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 360px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            animation: modal-enter 0.25s ease-out;
+        }
+
+        @keyframes modal-enter {
+            from { transform: scale(0.92); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .modal-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-emerald {
+            width: 100%;
+            background: var(--emerald);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* Screens Containers */
+        .screen-view {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .screen-view.active {
+            display: flex;
+        }
+
+        /* QR Code Hub Canvas */
+        .qr-canvas-box {
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        /* FAQ Chat Style */
+        .faq-bubble {
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .faq-q {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        .faq-a {
+            font-size: 12px;
+            color: var(--text-medium);
+            line-height: 1.5;
+        }
+
+        /* Audio Frequency Bar Visualizer */
+        .sound-wave {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 30px;
+            margin: 12px 0;
+        }
+        .bar {
+            width: 4px;
+            height: 10px;
+            background: var(--emerald);
+            border-radius: 2px;
+            animation: bounce 0.8s infinite ease-in-out alternate;
+        }
+        .bar:nth-child(2) { animation-delay: 0.2s; }
+        .bar:nth-child(3) { animation-delay: 0.4s; }
+        .bar:nth-child(4) { animation-delay: 0.1s; }
+        .bar:nth-child(5) { animation-delay: 0.5s; }
+        @keyframes bounce {
+            from { height: 6px; }
+            to { height: 26px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="badge">অফিসিয়াল স্মার্ট রিটেল শপ ম্যানেজার</div>
-            <h1>দোকান ও QR হিসাব</h1>
-            <p class="subtitle">আধুনিক ও প্রিমিয়াম বাংলা দোকান/ব্যবসা ব্যবস্থাপনা, QR কোড স্ক্যান, বিক্রির হিসাব, বাকির খাতা ও স্টক ম্যানেজমেন্ট</p>
-            <div class="dev-card">
-                <span class="dev-badge">👨‍💻 ডেভেলপার</span>
-                <span>অ্যাপ ডেভেলপার: <strong>তাফসির এবং তানভির</strong></span>
-            </div>
-        </header>
 
-        <section class="features">
-            <div class="feature-card">
-                <div class="feature-icon">⚡</div>
-                <h3>অ্যাটোমিক প্রক্সিমিটি পে</h3>
-                <p>কাস্টমার দোকানে আসলেই স্বয়ংক্রিয় প্রক্সিমিটি ট্র্যাকিং ও এনক্রিপ্টেড আল্ট্রাসাউন্ড অডিও হ্যান্ডশেকে ২ সেকেন্ডে বাকির টাকা পরিশোধ নিশ্চিতকরণ।</p>
+    <!-- 1. Laptop/Desktop Navigation Bar -->
+    <header class="laptop-topbar">
+        <div class="brand-info">
+            <div class="brand-logo">দ</div>
+            <div class="brand-text">
+                <h1>দোকান ও QR হিসাব</h1>
+                <span class="dev-tag">অ্যাপ ডেভেলপার: তাফসির এবং তানভির</span>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎙️</div>
-                <h3>ভয়েস হিসাব খাতা</h3>
-                <p>বাংলায় কথা বলে বিক্রি বা বাকির রেকর্ড করুন। এআই স্বয়ংক্রিয়ভাবে নাম, টাকা এবং পণ্যের বিবরণ আলাদা করে হিসাব খাতায় সংরক্ষণ করবে।</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📱</div>
-                <h3>কিউআর হাব ও পেমেন্ট</h3>
-                <p>বিকাশ, নগদ, রকেটের ডাইনামিক কিউআর কোড তৈরি এবং ব্লুটুথ থার্মাল পিওএস প্রিন্টারে ডিজিটাল মেমো প্রিন্ট করার সুবিধা।</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🔔</div>
-                <h3>স্বয়ংক্রিয় বাকি তাগাদা</h3>
-                <p>এক ক্লিকে হোয়াটসঅ্যাপ বা মেসেজে কাস্টমারকে ডিজিটাল বাংলা তাগাদা পাঠানো ও বকেয়া আদায়ের নির্ভরযোগ্য ট্র্যাকার।</p>
-            </div>
-        </section>
+        </div>
+        <div class="topbar-actions">
+            <button class="view-btn active" id="btnPhoneView" onclick="setDeviceView('phone')">📱 মোবাইল ভিউ</button>
+            <button class="view-btn" id="btnWideView" onclick="setDeviceView('wide')">💻 ওয়াইড ভিউ</button>
+            <a href="#" class="apk-btn" onclick="triggerApkDownload()">📥 Android APK ডাউনলোড</a>
+        </div>
+    </header>
 
-        <section class="cta-section">
-            <h2>মোবাইল অ্যাপটি ডাউনলোড করুন</h2>
-            <p style="color: #a7f3d0; margin-top: 8px;">আপনার অ্যান্ড্রয়েড ফোনে সরাসরি ইন্সটল করে সকল ফিচার সম্পূর্ণ ফ্রিতে উপভোগ করুন।</p>
-            <a href="#" class="cta-btn" onclick="alert('Google AI Studio সেটিংস মেনু থেকে Download APK বাটনে ক্লিক করে সরাসরি মোবাইল ইনস্টলার APK ফাইলটি ডাউনলোড করে নিন।'); return false;">📥 Android APK ডাউনলোড</a>
-        </section>
+    <!-- 2. Centered Page Viewport (Pure White Canvas) -->
+    <main class="page-viewport">
+        
+        <!-- Smartphone Mockup Frame -->
+        <div class="mobile-device-frame" id="deviceFrame">
+            <div class="device-camera"></div>
 
-        <footer>
-            <p>© 2026 দোকান ও QR হিসাব • অ্যাপ ডেভেলপার: তাফসির এবং তানভির</p>
-        </footer>
+            <div class="app-shell">
+                <!-- App Header -->
+                <div class="app-header">
+                    <div class="header-title-box">
+                        <h2 id="headerTitle">দোকান ও QR হিসাব</h2>
+                        <p id="headerSubtitle">তাফসির স্টোর • ডেভেলপার: তাফসির এবং তানভির</p>
+                    </div>
+                    <div class="header-icons">
+                        <button class="icon-btn" onclick="openRemindersModal()" title="বকেয়া তাগাদা">
+                            🔔
+                            <div class="badge-count">২</div>
+                        </button>
+                        <button class="icon-btn" onclick="switchTab('faq')" title="AI FAQ">
+                            ❓
+                        </button>
+                    </div>
+                </div>
+
+                <!-- App Scrollable Body -->
+                <div class="app-body">
+
+                    <!-- ================= SCREEN 1: হোম (Home) ================= -->
+                    <div class="screen-view active" id="screenHome">
+                        <!-- Stats Grid -->
+                        <div class="stats-grid">
+                            <div class="stat-box sale">
+                                <div class="stat-label">আজকের মোট বিক্রি</div>
+                                <div class="stat-value">৳ ৩,৭৫০</div>
+                            </div>
+                            <div class="stat-box cash">
+                                <div class="stat-label">নগদ জমা</div>
+                                <div class="stat-value">৳ ২,৪০০</div>
+                            </div>
+                            <div class="stat-box due">
+                                <div class="stat-label">মোট বকেয়া (বাকি)</div>
+                                <div class="stat-value">৳ ১,৩৫০</div>
+                            </div>
+                            <div class="stat-box profit">
+                                <div class="stat-label">আনুমানিক লাভ</div>
+                                <div class="stat-value">৳ ৬২০</div>
+                            </div>
+                        </div>
+
+                        <!-- Atomic Proximity Pay Card -->
+                        <div class="proximity-card" onclick="openProximityModal()">
+                            <div class="proximity-left">
+                                <div class="radar-pulse-icon">⚡</div>
+                                <div class="proximity-info">
+                                    <h4>অ্যাটোমিক প্রক্সিমিটি পে (Live)</h4>
+                                    <p>রহিম ভাই নিকটে আছেন • বকেয়া: ৳ ৪০০</p>
+                                </div>
+                            </div>
+                            <span class="tag-pill">টাচলেস পে</span>
+                        </div>
+
+                        <!-- Quick 4x Action Buttons -->
+                        <div class="actions-grid">
+                            <div class="action-tile" onclick="switchTab('memo')">
+                                <div class="icon-wrap" style="background:#eef2ff; color:#1a237e;">🧾</div>
+                                <span>নতুন মেমো</span>
+                            </div>
+                            <div class="action-tile" onclick="switchTab('due')">
+                                <div class="icon-wrap" style="background:#fff7ed; color:#f27d26;">📒</div>
+                                <span>বাকি খাতা</span>
+                            </div>
+                            <div class="action-tile" onclick="switchTab('qr')">
+                                <div class="icon-wrap" style="background:#ecfdf5; color:#10b981;">📱</div>
+                                <span>কিউআর হাব</span>
+                            </div>
+                            <div class="action-tile" onclick="switchTab('memo')">
+                                <div class="icon-wrap" style="background:#f0f9ff; color:#0284c7;">📦</div>
+                                <span>পণ্য ও স্টক</span>
+                            </div>
+                        </div>
+
+                        <!-- Voice Ledger Card -->
+                        <div class="voice-card" onclick="simulateVoiceLedger()">
+                            <div class="voice-left">
+                                <div class="mic-icon-btn">🎙️</div>
+                                <div>
+                                    <h4 style="font-size:13px; font-weight:700; color:#1a237e;">ভয়েস হিসাব খাতা</h4>
+                                    <p style="font-size:11px; color:#64748b;">মুখে বাংলায় বলুন, স্বয়ংক্রিয় হিসাব লিখে রাখবে</p>
+                                </div>
+                            </div>
+                            <span style="font-size:11px; color:#1a237e; font-weight:600;">বলুন ▶</span>
+                        </div>
+
+                        <!-- Developer & AI FAQ Banner -->
+                        <div class="dev-faq-card" onclick="switchTab('faq')">
+                            <div class="dev-faq-left">
+                                <div style="font-size:20px;">🤖</div>
+                                <div>
+                                    <h4 style="font-size:13px; font-weight:700; color:#1a237e;">প্রশ্ন ও AI সহায়তা (FAQ)</h4>
+                                    <p style="font-size:11px; color:#64748b;">অ্যাপ না বুঝলে প্রশ্ন করুন • ডেভলপার: তাফসির এবং তানভির</p>
+                                </div>
+                            </div>
+                            <span style="font-size:14px; color:#1a237e;">❯</span>
+                        </div>
+
+                        <!-- Recent Transactions -->
+                        <div class="section-header">
+                            <h3>সাম্প্রতিক লেনদেন</h3>
+                            <span style="font-size:11px; color:#1a237e; cursor:pointer;" onclick="switchTab('due')">সব দেখুন</span>
+                        </div>
+
+                        <div class="tx-list">
+                            <div class="tx-item">
+                                <div class="tx-left">
+                                    <div class="tx-icon" style="background:#ecfdf5; color:#10b981;">✓</div>
+                                    <div>
+                                        <div class="tx-title">নগদ ক্যাশ মেমো #১০৪২</div>
+                                        <div class="tx-date">আজ, দুপুর ০১:১৫ • সয়াবিন তেল, চিনি</div>
+                                    </div>
+                                </div>
+                                <div class="tx-amount green">+ ৳ ৫৪০</div>
+                            </div>
+                            <div class="tx-item">
+                                <div class="tx-left">
+                                    <div class="tx-icon" style="background:#fff7ed; color:#f27d26;">⌛</div>
+                                    <div>
+                                        <div class="tx-title">বাকি বিক্রি - রহিম ভাই</div>
+                                        <div class="tx-date">আজ, সকাল ১১:৩০ • মিনিকেট চাল ৫ কেজি</div>
+                                    </div>
+                                </div>
+                                <div class="tx-amount orange">৳ ৪০০</div>
+                            </div>
+                            <div class="tx-item">
+                                <div class="tx-left">
+                                    <div class="tx-icon" style="background:#ecfdf5; color:#10b981;">✓</div>
+                                    <div>
+                                        <div class="tx-title">বিকাশ মার্চেন্ট কিউআর পেমেন্ট</div>
+                                        <div class="tx-date">আজ, সকাল ১০:১০ • কাস্টমার পেমেন্ট</div>
+                                    </div>
+                                </div>
+                                <div class="tx-amount green">+ ৳ ৮৫০</div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Start.io Ad Banner -->
+                        <div class="bottom-ad-bar">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="ad-pill">বিজ্ঞাপন</span>
+                                <span style="font-size:11px; font-weight:600; color:#1e293b;">স্মার্ট থার্মাল পিওএস প্রিন্টার ৫০% ছাড়!</span>
+                            </div>
+                            <span style="font-size:12px; color:#94a3b8; cursor:pointer;" onclick="this.parentElement.style.display='none'">✕</span>
+                        </div>
+                    </div>
+
+                    <!-- ================= SCREEN 2: মেমো ও বিক্রি (Memo / POS) ================= -->
+                    <div class="screen-view" id="screenMemo">
+                        <div class="app-card">
+                            <h3 style="font-size:14px; margin-bottom:8px; color:var(--primary);">পণ্য নির্বাচন ও কার্ট</h3>
+                            <div style="display:flex; flex-direction:column; gap:8px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
+                                    <div>
+                                        <strong style="font-size:13px;">চিনি (Sugar) - ১ কেজি</strong>
+                                        <div style="font-size:11px; color:#64748b;">৳ ১৩০ x ১</div>
+                                    </div>
+                                    <strong style="font-size:13px;">৳ ১৩০</strong>
+                                </div>
+                                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
+                                    <div>
+                                        <strong style="font-size:13px;">মিনিকেট চাল - ৫ কেজি</strong>
+                                        <div style="font-size:11px; color:#64748b;">৳ ৭০ x ৫ কেজি</div>
+                                    </div>
+                                    <strong style="font-size:13px;">৳ ৩৫০</strong>
+                                </div>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-top:12px; font-size:15px; font-weight:700;">
+                                <span>মোট বিল:</span>
+                                <span style="color:var(--primary);">৳ ৪৮০</span>
+                            </div>
+                            <div style="display:flex; gap:8px; margin-top:12px;">
+                                <button class="btn-primary" style="flex:1;" onclick="openReceiptModal()">🧾 মেমো প্রিন্ট / সংরক্ষণ</button>
+                                <button class="btn-emerald" style="flex:1;" onclick="alert('ক্যাশ পেমেন্ট সম্পন্ন হয়েছে এবং ক্যাশ রেজিস্টারে ৪8০ টাকা যোগ হয়েছে।')">💵 নগদ আদায়</button>
+                            </div>
+                        </div>
+
+                        <div class="app-card">
+                            <h4 style="font-size:13px; margin-bottom:8px;">বারকোড স্ক্যানার</h4>
+                            <button class="btn-primary" style="background:#f1f5f9; color:#1a237e; border:1px dashed #cbd5e1;" onclick="simulateBarcodeScan()">📷 ক্যামেরা দিয়ে পণ্যের বারকোড স্ক্যান করুন</button>
+                        </div>
+                    </div>
+
+                    <!-- ================= SCREEN 3: কিউআর হাব (QR Hub) ================= -->
+                    <div class="screen-view" id="screenQr">
+                        <div class="qr-canvas-box">
+                            <h3 style="font-size:15px; color:var(--primary);">দোকানের মার্চেন্ট কিউআর কোড</h3>
+                            <!-- Clean SVG QR code simulation -->
+                            <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="180" height="180" fill="white" rx="10" stroke="#cbd5e1" stroke-width="2"/>
+                                <rect x="15" y="15" width="45" height="45" fill="#1a237e" rx="4"/>
+                                <rect x="25" y="25" width="25" height="25" fill="white"/>
+                                <rect x="30" y="30" width="15" height="15" fill="#1a237e"/>
+                                <rect x="120" y="15" width="45" height="45" fill="#1a237e" rx="4"/>
+                                <rect x="130" y="25" width="25" height="25" fill="white"/>
+                                <rect x="135" y="30" width="15" height="15" fill="#1a237e"/>
+                                <rect x="15" y="120" width="45" height="45" fill="#1a237e" rx="4"/>
+                                <rect x="25" y="130" width="25" height="25" fill="white"/>
+                                <rect x="30" y="135" width="15" height="15" fill="#1a237e"/>
+                                <rect x="70" y="20" width="12" height="12" fill="#1a237e"/>
+                                <rect x="90" y="35" width="16" height="16" fill="#1a237e"/>
+                                <rect x="75" y="65" width="30" height="30" fill="#e2136e" rx="4"/>
+                                <text x="90" y="85" fill="white" font-size="12" font-weight="bold" text-anchor="middle">bKash</text>
+                                <rect x="125" y="70" width="14" height="14" fill="#1a237e"/>
+                                <rect x="70" y="110" width="20" height="20" fill="#1a237e"/>
+                                <rect x="100" y="130" width="16" height="16" fill="#1a237e"/>
+                                <rect x="130" y="125" width="25" height="15" fill="#1a237e"/>
+                            </svg>
+                            <div style="text-align:center;">
+                                <strong style="font-size:14px; color:#1a237e;">তাফসির স্টোর - ০১৭xxxxxxxx</strong>
+                                <p style="font-size:12px; color:#64748b;">বিকাশ • নগদ • রকেট অল-ইন-ওয়ান কিউআর</p>
+                            </div>
+                            <div style="display:flex; gap:10px; width:100%;">
+                                <button class="btn-emerald" onclick="alert('কিউআর কোডটি সফলভাবে ডাউনলোড হয়েছে।')">📥 ডাউনলোড QR</button>
+                                <button class="btn-primary" onclick="window.print()">🖨️ প্রিন্ট করুন</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= SCREEN 4: বাকি খাতা (Due Ledger) ================= -->
+                    <div class="screen-view" id="screenDue">
+                        <div class="app-card" style="background:#fff7ed; border-color:#fed7aa;">
+                            <div style="font-size:12px; color:#9a3412;">মোট কাস্টমার বাকি (বকেয়া)</div>
+                            <div style="font-size:22px; font-weight:700; color:#ea580c;">৳ ১,৩৫০</div>
+                        </div>
+
+                        <div class="section-header">
+                            <h3>বকেয়া কাস্টমার তালিকা</h3>
+                        </div>
+
+                        <div class="tx-list">
+                            <div class="app-card" style="padding:10px 12px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <strong style="font-size:14px;">রহিম ভাই</strong>
+                                        <div style="font-size:11px; color:#64748b;">০১৮xxxxxxxx • ৫ দিন বাকি</div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <strong style="font-size:15px; color:#ea580c;">৳ ৪০০</strong>
+                                        <div style="font-size:10px; color:#10b981;">⚡ নিকটে আছেন</div>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:6px; margin-top:10px;">
+                                    <button class="btn-emerald" style="padding:6px; font-size:12px; margin-top:0;" onclick="openProximityModal()">⚡ টাচলেস পে</button>
+                                    <button class="btn-primary" style="padding:6px; font-size:12px; margin-top:0; background:#f1f5f9; color:#1a237e;" onclick="sendDueReminder('রহিম ভাই', '৪০০')">🔔 তাগাদা পাঠান</button>
+                                </div>
+                            </div>
+
+                            <div class="app-card" style="padding:10px 12px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div>
+                                        <strong style="font-size:14px;">করিম চাচা</strong>
+                                        <div style="font-size:11px; color:#64748b;">০১৭xxxxxxxx • ১২ দিন বাকি</div>
+                                    </div>
+                                    <div style="text-align:right;">
+                                        <strong style="font-size:15px; color:#ea580c;">৳ ৯৫০</strong>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:6px; margin-top:10px;">
+                                    <button class="btn-primary" style="padding:6px; font-size:12px; margin-top:0;" onclick="sendDueReminder('করিম চাচা', '৯৫০')">🔔 হোয়াটসঅ্যাপে তাগাদা</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ================= SCREEN 5: AI FAQ ও সহায়তা ================= -->
+                    <div class="screen-view" id="screenFaq">
+                        <div class="app-card" style="background:#eef2ff; border-color:#c7d2fe;">
+                            <h3 style="font-size:14px; color:#1a237e;">দোকান AI সহকারী ও প্রশ্নোত্তর</h3>
+                            <p style="font-size:12px; color:#4338ca;">অ্যাপ ডেভেলপার: <strong>তাফসির এবং তানভির</strong></p>
+                        </div>
+
+                        <div id="faqList">
+                            <div class="faq-bubble">
+                                <div class="faq-q">১. অ্যাটোমিক প্রক্সিমিটি পে কীভাবে কাজ করে?</div>
+                                <div class="faq-a">বকেয়া থাকা কাস্টমার দোকানে আসলে স্বয়ংক্রিয় প্রক্সিমিটি ট্র্যাকিংয়ে নোটিফিকেশন আসবে। টাচলেস পে চাপলে আল্ট্রাসাউন্ড অডিও হ্যান্ডশেকে ২ সেকেন্ডে বাকির টাকা পরিশোধ হয়ে যাবে।</div>
+                            </div>
+                            <div class="faq-bubble">
+                                <div class="faq-q">২. ভয়েস হিসাব খাতা কীভাবে ব্যবহার করব?</div>
+                                <div class="faq-a">মাইক আইকনে ট্যাপ করে বাংলায় বলুন (যেমন: 'রহিম ভাইকে চিনি ২ কেজি বাকি দিলাম ২৬০ টাকা')। এআই স্বয়ংক্রিয়ভাবে খাতা আপডেট করে নেবে।</div>
+                            </div>
+                            <div class="faq-bubble">
+                                <div class="faq-q">৩. কিউআর কোড দিয়ে কাস্টমার থেকে টাকা কীভাবে নেব?</div>
+                                <div class="faq-a">কিউআর হাব ট্যাবে গিয়ে টাকার পরিমাণ বসিয়ে বিকাশ, নগদ বা রকেটের কিউআর কোড কাস্টমারকে দেখিয়ে সরাসরি টাকা গ্রহণ করুন।</div>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; gap:6px; margin-top:8px;">
+                            <input type="text" id="aiQuestionInput" placeholder="অ্যাপ নিয়ে প্রশ্ন লিখুন..." style="flex:1; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:12px; outline:none;">
+                            <button class="btn-primary" style="width:auto; margin-top:0; padding:8px 14px;" onclick="askAiQuestion()">প্রশ্ন করুন</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Bottom Navigation Bar -->
+                <nav class="app-bottom-nav">
+                    <a class="nav-item active" id="tabHome" onclick="switchTab('home')">
+                        <div class="nav-icon">🏠</div>
+                        <span>হোম</span>
+                    </a>
+                    <a class="nav-item" id="tabMemo" onclick="switchTab('memo')">
+                        <div class="nav-icon">🧾</div>
+                        <span>মেমো</span>
+                    </a>
+                    <a class="nav-item" id="tabQr" onclick="switchTab('qr')">
+                        <div class="nav-icon">📱</div>
+                        <span>কিউআর</span>
+                    </a>
+                    <a class="nav-item" id="tabDue" onclick="switchTab('due')">
+                        <div class="nav-icon">📒</div>
+                        <span>বাকি</span>
+                    </a>
+                    <a class="nav-item" id="tabFaq" onclick="switchTab('faq')">
+                        <div class="nav-icon">❓</div>
+                        <span>FAQ</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal 1: Atomic Proximity Pay Live Settlement -->
+    <div class="modal-overlay" id="proximityModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>⚡ অ্যাটোমিক প্রক্সিমিটি পে</h3>
+                <button class="close-btn" onclick="closeModal('proximityModal')">×</button>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:36px; margin:4px 0;">📡</div>
+                <h4 style="font-size:15px; color:#1a237e;">রহিম ভাই দোকানে উপস্থিত</h4>
+                <p style="font-size:12px; color:#64748b;">দূরত্ব: ১.২ মিটার • অফলাইন এনক্রিপ্টেড পালস</p>
+                <div style="font-size:22px; font-weight:700; color:#ea580c; margin:8px 0;">বকেয়া: ৳ ৪০০</div>
+                
+                <div class="sound-wave" id="soundWave" style="display:none;">
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                </div>
+
+                <div id="proximityStatus" style="font-size:12px; color:#10b981; font-weight:600; margin-bottom:8px;">
+                    ১৮.৫ kHz অডিও রাডার সিগন্যাল সক্রিয়
+                </div>
+
+                <button class="btn-emerald" id="btnSettleDue" onclick="executeProximitySettlement()">Clear Due / টাচলেস পে সম্পন্ন করুন</button>
+            </div>
+        </div>
     </div>
+
+    <!-- Modal 2: Digital Memo Receipt Preview -->
+    <div class="modal-overlay" id="receiptModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>দোকানের ডিজিটাল মেমো</h3>
+                <button class="close-btn" onclick="closeModal('receiptModal')">×</button>
+            </div>
+            <div style="background:#f8fafc; border:1px dashed #cbd5e1; padding:12px; border-radius:10px; font-size:12px;">
+                <div style="text-align:center; margin-bottom:8px;">
+                    <strong>তাফসির স্টোর</strong><br>
+                    মেমো নং: #১০৪৩ • তারিখ: ২০২৬-০৯-২১
+                </div>
+                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">
+                    <span>চিনি (১ কেজি)</span>
+                    <span>৳ ১৩০</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding:4px 0;">
+                    <span>মিনিকেট চাল (৫ কেজি)</span>
+                    <span>৳ ৩৫০</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-weight:bold; margin-top:8px;">
+                    <span>সর্বমোট পরিশোধিত:</span>
+                    <span style="color:#10b981;">৳ ৪৮০</span>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="window.print()">🖨️ প্রিন্ট করুন</button>
+        </div>
+    </div>
+
+    <script>
+        // Switch between Smartphone Frame and Laptop Wide View
+        function setDeviceView(mode) {
+            const frame = document.getElementById('deviceFrame');
+            const btnPhone = document.getElementById('btnPhoneView');
+            const btnWide = document.getElementById('btnWideView');
+
+            if (mode === 'wide') {
+                frame.classList.add('wide-mode');
+                btnWide.classList.add('active');
+                btnPhone.classList.remove('active');
+            } else {
+                frame.classList.remove('wide-mode');
+                btnPhone.classList.add('active');
+                btnWide.classList.remove('active');
+            }
+        }
+
+        // Tab Switching Logic
+        function switchTab(tabName) {
+            // Hide all screens
+            const screens = document.querySelectorAll('.screen-view');
+            screens.forEach(s => s.classList.remove('active'));
+
+            // Remove active from nav items
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(n => n.classList.remove('active'));
+
+            const title = document.getElementById('headerTitle');
+
+            if (tabName === 'home') {
+                document.getElementById('screenHome').classList.add('active');
+                document.getElementById('tabHome').classList.add('active');
+                title.innerText = "দোকান ও QR হিসাব";
+            } else if (tabName === 'memo') {
+                document.getElementById('screenMemo').classList.add('active');
+                document.getElementById('tabMemo').classList.add('active');
+                title.innerText = "নতুন মেমো ও বিক্রি (POS)";
+            } else if (tabName === 'qr') {
+                document.getElementById('screenQr').classList.add('active');
+                document.getElementById('tabQr').classList.add('active');
+                title.innerText = "মার্চেন্ট কিউআর হাব";
+            } else if (tabName === 'due') {
+                document.getElementById('screenDue').classList.add('active');
+                document.getElementById('tabDue').classList.add('active');
+                title.innerText = "কাস্টমার বাকি খাতা";
+            } else if (tabName === 'faq') {
+                document.getElementById('screenFaq').classList.add('active');
+                document.getElementById('tabFaq').classList.add('active');
+                title.innerText = "প্রশ্ন ও AI সহায়তা (FAQ)";
+            }
+        }
+
+        // Modal Handlers
+        function openProximityModal() {
+            document.getElementById('proximityModal').style.display = 'flex';
+        }
+
+        function openReceiptModal() {
+            document.getElementById('receiptModal').style.display = 'flex';
+        }
+
+        function openRemindersModal() {
+            switchTab('due');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Proximity Pay Simulation
+        function executeProximitySettlement() {
+            const wave = document.getElementById('soundWave');
+            const status = document.getElementById('proximityStatus');
+            const btn = document.getElementById('btnSettleDue');
+
+            wave.style.display = 'flex';
+            status.innerText = "এনক্রিপ্টেড অডিও হ্যান্ডশেক চলছে...";
+            status.style.color = "#f27d26";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                wave.style.display = 'none';
+                status.innerText = "✓ পরিশোধ সফল! রহিম ভাইয়ের ৪০০ টাকা বাকি পরিশোধিত হয়েছে।";
+                status.style.color = "#10b981";
+                btn.style.display = 'none';
+
+                // Play pleasant subtle audio beep
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, ctx.currentTime);
+                    osc.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } catch(e){}
+
+                setTimeout(() => {
+                    closeModal('proximityModal');
+                    btn.disabled = false;
+                    btn.style.display = 'block';
+                    status.innerText = "১৮.৫ kHz অডিও রাডার সিগন্যাল সক্রিয়";
+                    alert("স্বয়ংক্রিয় ডিজিটাল রসিদ রহিম ভাইয়ের মোবাইলে পুশ করা হয়েছে।");
+                }, 1800);
+            }, 1200);
+        }
+
+        // Voice Ledger Simulation
+        function simulateVoiceLedger() {
+            const promptVal = prompt("ভয়েস হিসাব ইনপুট (যেমন: 'করিম চাচা আলু ৫ কেজি বাকি দিলেন ২৫০ টাকা'):", "করিম চাচা আলু ৫ কেজি বাকি দিলেন ২৫০ টাকা");
+            if (promptVal) {
+                alert("ভয়েস পার্স সফল!\nকাস্টমার: করিম চাচা\nপণ্য: আলু ৫ কেজি\nবাকি এন্ট্রি: ২৫০ টাকা খাতা এবং ডাটাবেজে সংরক্ষণ করা হয়েছে।");
+            }
+        }
+
+        // Barcode Scanner Simulation
+        function simulateBarcodeScan() {
+            alert("বারকোড স্ক্যান সফল!\nপণ্য: তীর সয়াবিন তেল (১ লিটার)\nমূল্য: ১৭৫ টাকা\nকার্টে যুক্ত করা হয়েছে।");
+        }
+
+        // Due Reminder Send
+        function sendDueReminder(name, amount) {
+            alert(`${name}-কে হোয়াটসঅ্যাপ ও এসএমএসে বাকি তাগাদা বার্তা পাঠানো হয়েছে:\n'শ্রদ্ধেয় ${name}, তাফসির স্টোরে আপনার বকেয়ার পরিমাণ ${amount} টাকা। পরিশোধের অনুরোধ করা হলো।'`);
+        }
+
+        // AI Assistant Ask Question
+        function askAiQuestion() {
+            const input = document.getElementById('aiQuestionInput');
+            const q = input.value.trim();
+            if (!q) return;
+
+            const faqList = document.getElementById('faqList');
+            const newBubble = document.createElement('div');
+            newBubble.className = 'faq-bubble';
+
+            let answer = "আপনার প্রশ্নের জন্য ধন্যবাদ। এই ফিচারটি সম্পূর্ণ অফলাইনে কাজ করে এবং ডেভলপার তাফসির এবং তানভির কর্তৃক সর্বোচ্চ সিকিউরিটি সহকারে তৈরি করা হয়েছে।";
+            if (q.includes("বাকি") || q.includes("তাগাদা")) {
+                answer = "বাকি খাতা ট্যাবে গিয়ে যেকোনো কাস্টমারের নামের পাশে 'তাগাদা পাঠান' চাপলে স্বয়ংক্রিয়ভাবে মেসেজ চলে যাবে।";
+            } else if (q.includes("মেমো") || q.includes("প্রিন্ট")) {
+                answer = "মেমো ট্যাবে পণ্য সিলেক্ট করে 'মেমো প্রিন্ট' চাপলেই ব্লুটুথ পিওএস বা যেকোনো প্রিন্টারে প্রিন্ট নেওয়া যাবে।";
+            }
+
+            newBubble.innerHTML = `<div class="faq-q">প্রশ্ন: ${q}</div><div class="faq-a">AI উত্তর: ${answer}</div>`;
+            faqList.prepend(newBubble);
+            input.value = "";
+        }
+
+        // Download APK alert helper
+        function triggerApkDownload() {
+            alert("অ্যান্ড্রয়েড ফোনে সরাসরি ইনস্টল করার জন্য:\nGoogle AI Studio-র উপরের ডানপাশের Settings / Export মেনু থেকে 'Download APK' বাটনে ক্লিক করে সরাসরি অফিসিয়াল APK ফাইলটি নামিয়ে নিন।");
+        }
+    </script>
 </body>
 </html>
