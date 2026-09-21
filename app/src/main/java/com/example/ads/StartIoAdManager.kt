@@ -193,27 +193,33 @@ object StartIoAdManager {
                     interstitialAd = StartAppAd(activity)
                 }
 
-                sdkShown = interstitialAd?.showAd(object : AdDisplayListener {
-                    override fun adHidden(ad: Ad?) {
-                        Log.d(TAG, "Interstitial Ad closed")
-                        preloadInterstitial(activity)
-                        onAdClosed?.invoke()
-                    }
+                // Only call showAd if StartAppAd is actually ready to avoid Dropped impression AD_NOT_READY
+                if (interstitialAd?.isReady == true) {
+                    sdkShown = interstitialAd?.showAd(object : AdDisplayListener {
+                        override fun adHidden(ad: Ad?) {
+                            Log.d(TAG, "Interstitial Ad closed")
+                            preloadInterstitial(activity)
+                            onAdClosed?.invoke()
+                        }
 
-                    override fun adDisplayed(ad: Ad?) {
-                        Log.d(TAG, "Interstitial Ad displayed")
-                    }
+                        override fun adDisplayed(ad: Ad?) {
+                            Log.d(TAG, "Interstitial Ad displayed")
+                        }
 
-                    override fun adClicked(ad: Ad?) {
-                        Log.d(TAG, "Interstitial Ad clicked")
-                    }
+                        override fun adClicked(ad: Ad?) {
+                            Log.d(TAG, "Interstitial Ad clicked")
+                        }
 
-                    override fun adNotDisplayed(ad: Ad?) {
-                        Log.d(TAG, "Interstitial Ad not displayed - showing fallback")
-                        showFullscreenPromoAd()
-                        preloadInterstitial(activity)
-                    }
-                }) ?: false
+                        override fun adNotDisplayed(ad: Ad?) {
+                            Log.d(TAG, "Interstitial Ad not displayed - showing fallback")
+                            showFullscreenPromoAd()
+                            preloadInterstitial(activity)
+                        }
+                    }) ?: false
+                } else {
+                    Log.d(TAG, "StartAppAd is not ready yet; preloading for next display cycle")
+                    preloadInterstitial(activity)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Exception showing Start.io Ad", e)
             }
